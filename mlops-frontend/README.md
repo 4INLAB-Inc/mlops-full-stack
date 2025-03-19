@@ -5,11 +5,17 @@
 1. 의존성 설치
 ```bash
 npm install
+npm install axios express multer cors
 ```
 
 2. 개발 서버 실행
 ```bash
 npm run dev
+```
+
+3. Node Server 서버 실행
+```bash
+node server.js
 ```
 
 ## 주요 컴포넌트 구조
