@@ -146,7 +146,6 @@ import {
   DeltaType,
 } from '@tremor/react'
 
-// Dynamic imports for charts
 const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false })
 const ModelPerformanceChart = dynamic(() => import('@/components/models/ModelPerformanceChart'), { 
   ssr: false,
