@@ -421,19 +421,6 @@ interface LogEntry {
 
 import axios from 'axios';
 
-// // Định nghĩa edgeTypes bên ngoài component
-// export const edgeTypes = {
-//   bezier: ({ id, sourceX, sourceY, targetX, targetY, style }: EdgeProps) => (
-//     <path
-//       id={id}
-//       d={`M ${sourceX},${sourceY} C ${sourceX + 100},${sourceY} ${targetX - 100},${targetY} ${targetX},${targetY}`}
-//       fill="none"
-//       stroke={style?.stroke || '#ED8936'}
-//       strokeWidth={style?.strokeWidth || 2}
-//       opacity={style?.opacity || 0.8}
-//     />
-//   ),
-// };
 
 function PipelineContent() {
   // 노드 타입 정의
