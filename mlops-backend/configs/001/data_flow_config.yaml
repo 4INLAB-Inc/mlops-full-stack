@@ -1,0 +1,13 @@
+flow_module: flows.data_flow
+data_type: timeseries  # Specify 'image' or 'timeseries'
+dataset:
+    ds_root: /home/ariya/central_storage/datasets/
+    ds_name: Stock_product_03 # For Timeseries datasets
+    dvc_tag: ['제조', '센서', '실시간']
+    dvc_checkout: true
+    file_path: /home/ariya/workspace/datasets/timeseries/62441-AR000_재고량.xlsx   # File path for time-series data
+    date_col: TransactionDate  # Column containing date information
+    target_col: Stock  # Target column
+    time_step: 30  # Specify the number of time steps
+    ds_author: 박진제
+    ds_description: Stock amount of product ....

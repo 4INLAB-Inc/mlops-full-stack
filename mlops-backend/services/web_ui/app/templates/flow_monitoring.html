@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow Monitoring</title>
+    <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 2em;
+        }
+        #plotly-graph {
+            width: 1500px;
+            height: 800px;
+            margin: 20px auto;
+            border: 2px solid #ccc;
+            background-color:rgb(141, 212, 120);
+        }
+        p {
+            text-align: center;
+            font-size: 1.2em;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flow Runs Monitoring Graph</h1>
+    <div id="plotly-graph">
+        <!-- Nội dung đồ thị sẽ được chèn tại đây -->
+    </div>
+
+    <script>
+        async function updateGraph() {
+            try {
+                console.log("Fetching graph data...");
+                const response = await fetch("http://192.168.219.52:8686/api/flow-monitoring-data");
+    
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+    
+                const apiResponse = await response.json();
+                console.log("API response:", apiResponse);
+    
+                // Extract data and layout from API response
+                const { graph, layout } = apiResponse;
+    
+                // Update the graph with Plotly.react
+                Plotly.react("plotly-graph", graph, layout);
+                console.log("Graph updated successfully!");
+            } catch (err) {
+                console.error("Error updating graph:", err);
+    
+                // Optional: Show an error message without disrupting the existing graph
+                const errorElement = document.getElementById("error-message");
+                if (errorElement) {
+                    errorElement.innerText = "Error updating the graph. Please check the console for details.";
+                }
+            }
+        }
+    
+        // Call updateGraph on page load
+        updateGraph();
+    
+        // Update graph periodically every 5 seconds
+        setInterval(updateGraph, 5000); // Adjust to 5 seconds for better performance
+    </script>
+    
+    
+</body>
+</html>

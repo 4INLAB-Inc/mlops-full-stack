@@ -1,0 +1,4 @@
+run method:
+1. docker exec -it postgres bash
+
+2. psql -U postgres -f /docker-entrypoint-initdb.d/docker_postgres_init.sql

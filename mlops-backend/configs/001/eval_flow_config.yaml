@@ -1,0 +1,39 @@
+flow_module: flows.eval_flow
+data_type: timeseries 
+dataset:
+    # ds_root: /home/ariya/workspace/datasets/
+    # ds_name: Stock_product_01  # For Timeseries datasets
+    # dvc_tag: ['제조', '센서', '실시간']
+    # dvc_checkout: true
+    # file_path: /home/ariya/workspace/datasets/timeseries/62422-AR000_재고량.csv   # File path for time-series data
+    # date_col: TransactionDate  # Column containing date information
+    # target_col: Stock  # Target column
+    # time_step: 30  # Specify the number of time steps
+    # ds_author: 다어반권
+    # ds_description: Stock amount of product ....
+    dvc_ds_root: /home/ariya/central_storage/datasets/Stock_product_01
+    ds_name: Stock_product_01
+            
+evaluate:
+    run_name: stock_prediction_LSTM_ver008
+    model_name: stock_prediction
+    image:  # Configuration specific to image data
+        subset: test
+        model_dir: /home/ariya/workspace/models/animals10_classifier_50px_trial7  # Directory containing the image model
+        model_metadata_file_path: /home/ariya/workspace/models/animals10_classifier_50px_trial7.yaml
+        mlflow:
+            exp_name: Evaluate Animals10 Classifier
+            exp_desc: Evaluate an image classification model
+            exp_tags:
+                dataset: Animals10
+    timeseries:  # Configuration specific to time-series data
+        subset: test
+        model_type: LSTM
+        model_dir: /home/ariya/central_storage/models/timeseries/stock_prediction_LSTM_ver008  # Directory containing the time-series model
+        model_metadata_file_path: /home/ariya/central_storage/models/timeseries/stock_prediction_LSTM_ver008/stock_prediction.yaml
+        model_version: 2
+        mlflow:
+            exp_name: Timeseries Stock Prediction Evaluation
+            exp_desc: Evaluate a time-series model for stock prediction
+            exp_tags:
+                dataset: Time Series Data

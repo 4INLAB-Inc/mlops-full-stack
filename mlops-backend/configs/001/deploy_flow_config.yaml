@@ -1,0 +1,11 @@
+flow_module: flows.deploy_flow
+        
+deploy:
+    model_name: stock_prediction
+    model_type: LSTM
+    model_version: 2
+    # prefect:
+    #     git_repo_root: ~/workspace/deployments/prefect-deployments
+    #     # this should match the deployment name in prefect.yaml 
+    #     # at the root of the specified repo
+    #     deployment_name: drift_detection_evidently

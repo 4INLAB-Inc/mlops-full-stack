@@ -1,0 +1,14 @@
+deployments:
+  - name: all_flow_deployment
+    version: null
+    tags: []
+    description: "Evaluate a time-series model every day."
+    schedule:
+      rrule: 'FREQ=DAILY;INTERVAL=1'  # Run every day
+    entrypoint: "flows.eval_flow.eval_flow"  # Path to the eval flow function
+    parameters:
+      model_metadata_file_path: "/home/ariya/central_storage/models/timeseries/stock_prediction_BiLSTM_ver008/stock_prediction.yaml"
+      run_name: "stock_prediction_BiLSTM_ver008"
+      dvc_data_dir: "/home/ariya/workspace/datasets/Stock_product_01"
+    work_pool:
+      name: "default-agent-pool"

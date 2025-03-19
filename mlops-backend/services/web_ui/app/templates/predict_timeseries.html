@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Time Series Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+    <style>
+        /* Add custom styles for positioning the button */
+        .top-right-btn {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Button to link to flow_monitoring.html, positioned at the top-right -->
+        <div class="top-right-btn">
+            <a href="{{ url_for('flow_monitoring') }}"><button>Flow Monitoring</button></a>
+        </div>
+        
+        <h1>Time Series Prediction</h1>
+        <form method="post" action="/call_api">
+            <label for="timeseries">Enter Time Series Data (comma-separated):</label><br>
+            <textarea id="timeseries" name="timeseries" rows="10" cols="150">{{ timeseries or "" }}</textarea><br><br>
+            <button type="submit">Run Prediction</button>
+        </form>
+
+        {% if pred_result %}
+        <h2>Prediction Results</h2>
+        <p>Model Name: {{ model_name }}</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Predicted_value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prob in pred_result %}
+                <tr>
+                    <td>--</td>
+                    <td>{{ prob }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+</body>
+</html>
