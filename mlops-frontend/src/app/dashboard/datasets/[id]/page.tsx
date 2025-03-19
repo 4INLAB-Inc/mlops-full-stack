@@ -56,7 +56,7 @@ export default function DatasetDetailPage() {
   const borderColor = useColorModeValue('gray.200', 'gray.700')
   const brandColor = '#EB6100'
 
-  // Fetch dataset from API using the datasetId
+  // Fetch dataset from API
   useEffect(() => {
     const fetchDataset = async (datasetId: string) => {
       try {
