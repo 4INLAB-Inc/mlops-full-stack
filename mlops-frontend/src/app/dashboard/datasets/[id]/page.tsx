@@ -73,7 +73,7 @@ export default function DatasetDetailPage() {
     };
 
     if (params.id) {
-      fetchDataset(params.id);
+      fetchDataset(params.id); //
     }
   }, [params.id]);
 

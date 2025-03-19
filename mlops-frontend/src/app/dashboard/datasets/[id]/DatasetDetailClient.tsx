@@ -76,7 +76,7 @@ export default function DatasetDetailClient({ datasetId }: DatasetDetailClientPr
         setLoading(true)
         const response = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/datasets/client/${datasetId}`)
         const data = await response.json()
-        setDataset(data)  // 데이터셋 API에서 가져온 데이터를 상태에 저장
+        setDataset(data) 
       } catch (error) {
         console.error('데이터셋 세부 정보를 가져오는 중 오류 발생:', error)
       } finally {

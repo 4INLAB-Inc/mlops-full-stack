@@ -27,7 +27,7 @@ import { DatasetUploadModal } from '@/components/datasets/DatasetUploadModal'
 import Link from 'next/link'
 
 export default function DatasetsPage() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')  // 데이터셋 뷰 모드 (그리드 또는 리스트)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')  // 데이터셋 뷰 모드 
   const [searchQuery, setSearchQuery] = useState('')  // 검색어 상태 관리
   const [typeFilter, setTypeFilter] = useState('all')  // 데이터셋 유형 필터 상태 관리
   const { isOpen: isUploadOpen, onOpen: onUploadOpen, onClose: onUploadClose } = useDisclosure()  // 데이터셋 업로드 모달 열기/닫기 상태 관리
