@@ -12,7 +12,7 @@ const { hostname, port } = new URL(serverUrl);  // URL 객체를 사용하여 ho
 // 🟢 모든 요청을 localhost:3000에서 허용
 app.use(cors({ origin: "http://localhost:3000" }));
 
-// 폴더가 존재하지 않으면 생성
+
 const uploadDir = "public/model-thumbnails";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
