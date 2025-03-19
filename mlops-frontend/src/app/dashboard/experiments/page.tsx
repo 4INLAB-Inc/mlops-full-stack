@@ -25,7 +25,7 @@ import { ExperimentCard } from '@/components/experiments/ExperimentCard'
 import { ExperimentComparison } from '@/components/experiments/ExperimentComparison'
 
 
-// // 임시 실험 데이터 (Mock Data)
+// // 임시 실험 데이터
 // const mockExperiments = [
 //   {
 //     id: '1',
@@ -189,7 +189,7 @@ export default function ExperimentsPage() {
               experiment={experiment}
               isSelected={selectedExperiments.includes(experiment.id)}
               onClick={() => handleExperimentClick(experiment.id)}
-              onDoubleClick={() => handleDetailExperimentClick(experiment.id)} //Open detail experiment page when double click
+              onDoubleClick={() => handleDetailExperimentClick(experiment.id)}
             />
           ))}
         </Grid>
@@ -257,7 +257,7 @@ export default function ExperimentsPage() {
 //   const [statusFilter, setStatusFilter] = useState('all')
 //   const [sortBy, setSortBy] = useState('updated')
 //   const [selectedExperiments, setSelectedExperiments] = useState<string[]>([])
-//   const [experiments, setExperiments] = useState<Experiment[]>([])  // ✅ 백엔드 데이터 저장
+//   const [experiments, setExperiments] = useState<Experiment[]>([])  // 
 
 //   const bgColor = useColorModeValue('white', 'gray.800')
 

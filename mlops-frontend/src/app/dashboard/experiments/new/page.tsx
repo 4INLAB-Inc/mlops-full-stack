@@ -39,7 +39,7 @@ export default function NewExperimentPage() {
   const [datasets, setDatasets] = useState<string[]>([]);
   const [models, setModels] = useState<string[]>([]);
 
-  // Call API to get list of dataset & model
+  // Call API to get list
   useEffect(() => {
     const fetchOptions = async () => {
       try {

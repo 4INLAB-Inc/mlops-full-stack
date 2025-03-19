@@ -12,8 +12,7 @@ interface ExperimentPageProps {
 }
 
 export default function ExperimentPage() {
-  const { id } = useParams(); // Get the `id` parameter from the URL
-
+  const { id } = useParams(); 
   const [experiment, setExperiment] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
