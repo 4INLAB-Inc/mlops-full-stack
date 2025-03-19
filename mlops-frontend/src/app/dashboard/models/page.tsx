@@ -33,8 +33,8 @@ import { CreateModelModal } from '@/components/models/CreateModelModal'
 import Link from 'next/link'
 
 export default function ModelsPage() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')  // 모델 뷰 모드 (그리드 또는 리스트)
-  const [searchQuery, setSearchQuery] = useState('')  // 검색어 상태 관리
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid') 
+  const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')  // 상태 필터 상태 관리
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)  // 모델 생성 모달 상태 관리
   const [models, setModels] = useState<any[]>([])  // API에서 받은 모델 데이터를 저장

@@ -75,14 +75,14 @@ export default function ModelDetailClient({ modelId }: ModelDetailClientProps) {
   const borderColor = useColorModeValue('gray.200', 'gray.700')
   const brandColor = '#EB6100'
 
-  // Lấy dữ liệu từ API
+
   useEffect(() => {
     const fetchModelDetails = async () => {
       try {
         setLoading(true)
         const response = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/models/detailed/${modelId}`)
         const data = await response.json()
-        setModelData(data)  // Set dữ liệu mô hình từ API
+        setModelData(data) 
       } catch (error) {
         console.error('Error fetching model details:', error)
       } finally {
@@ -91,10 +91,10 @@ export default function ModelDetailClient({ modelId }: ModelDetailClientProps) {
     }
 
     fetchModelDetails()
-  }, [modelId])  // Lấy lại dữ liệu khi modelId thay đổi
+  }, [modelId]) 
 
   if (loading) {
-    return <Text>Loading...</Text>  // Hiển thị thông báo loading khi dữ liệu đang được lấy
+    return <Text>Loading...</Text>  
   }
 
   const getStatusColor = (status: string) => {
@@ -126,7 +126,7 @@ export default function ModelDetailClient({ modelId }: ModelDetailClientProps) {
     return `${(value * 100).toFixed(1)}%`
   }
 
-  // Dữ liệu biểu đồ radar
+
   const performanceMetricsData = [
     {
       metric: '정확도',
