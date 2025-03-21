@@ -25,6 +25,8 @@ import { ResourceTable } from './components/ResourceTable'
 import { fetchResourceMonitoring, fetchResourceHistory, generateMockData } from './api/service'
 import { ResourceMonitoringData } from './api/types'
 
+import axios from 'axios'
+
 export default function ResourcesPage() {
   const [data, setData] = useState<ResourceMonitoringData | null>(null)
   const [timeRange, setTimeRange] = useState('3h')

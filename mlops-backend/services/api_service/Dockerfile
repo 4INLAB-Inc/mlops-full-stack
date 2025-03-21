@@ -33,6 +33,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
         sudo \
         npm \
         libgl1 \ 
+        docker.io \
         # for run cmd
         tini \ 
         # for DeepChecks

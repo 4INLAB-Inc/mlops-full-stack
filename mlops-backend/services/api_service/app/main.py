@@ -1,6 +1,6 @@
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from api.resource_monitoring import get_system_stats, save_system_stats
+from api.resource_monitoring import get_system_stats, save_system_stats, get_system_stats_full
 from typing import List, Dict
 import asyncio
 
@@ -24,7 +24,9 @@ origins = [
     "http://127.0.0.1:4243",  # Localhost URL
     "http://localhost:3000",
     f"http://{LOCAL_MACHINE_HOST}:8686",
+    "http://192.168.219.30:3000",
     "http://192.168.219.40:3000",
+    "http://192.168.219.50:3000",
     "http://192.168.219.52:3000",# Another local URL
 ]
 
@@ -45,12 +47,14 @@ async def periodic_save_stats():
             save_system_stats(stats)  # Save the stats to the file
         except Exception as e:
             print(f"Error occurred while saving system stats: {e}")
-        await asyncio.sleep(60)  # Wait for 60 seconds before running again
+        await asyncio.sleep(300)  # Wait for 60 seconds before running again
 
 @app.on_event("startup")
 async def start_periodic_task():
     # Start the background task to save system stats periodically
     asyncio.create_task(periodic_save_stats())
+
+app.add_api_route("/api/resource-monitoring", get_system_stats_full, methods=["GET"], tags=["Resource Monitoring"])
 
 
 # =========================Prefect FLow Monitoring=========================
