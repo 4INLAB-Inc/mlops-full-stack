@@ -981,18 +981,232 @@ const ModelPerformance = memo(() => {
 
 ModelPerformance.displayName = 'ModelPerformance'
 
-// 리소스 사용량 차트 옵션
-const ResourceUsageStats = memo(() => {
-  const labelColor = useColorModeValue('#1F2C5C', '#CBD5E0')
-  const tooltipTheme = useColorModeValue('light', 'dark')
-  const gridColor = useColorModeValue('#f1f1f1', '#2D3748')
+// // 리소스 사용량 차트 옵션
+// const ResourceUsageStats = memo(() => {
+//   const labelColor = useColorModeValue('#1F2C5C', '#CBD5E0')
+//   const tooltipTheme = useColorModeValue('light', 'dark')
+//   const gridColor = useColorModeValue('#f1f1f1', '#2D3748')
 
+//   const chartOptions = useMemo(() => ({
+//     chart: {
+//       type: 'area',
+//       height: 350,
+//       toolbar: {
+//         show: true
+//       },
+//       animations: {
+//         enabled: true,
+//         easing: 'easeinout',
+//         speed: 800,
+//       },
+//       background: 'transparent',
+//       fontFamily: 'Pretendard'
+//     },
+//     stroke: {
+//       width: [3, 3],
+//       curve: 'smooth'
+//     },
+//     colors: ['#FF6B00', '#1F2C5C'],
+//     fill: {
+//       type: ['gradient', 'gradient'],
+//       gradient: {
+//         shade: 'dark',
+//         type: 'vertical',
+//         shadeIntensity: 0.5,
+//         opacityFrom: 0.7,
+//         opacityTo: 0.1,
+//         stops: [50, 100]
+//       }
+//     },
+//     markers: {
+//       size: 4,
+//       colors: ['#FF6B00', '#1F2C5C'],
+//       strokeColors: '#fff',
+//       strokeWidth: 2,
+//       hover: {
+//         size: 7,
+//         sizeOffset: 3
+//       }
+//     },
+//     dataLabels: {
+//       enabled: false
+//     },
+//     grid: {
+//       borderColor: gridColor,
+//       strokeDashArray: 5,
+//       xaxis: {
+//         lines: {
+//           show: true
+//         }
+//       },
+//       yaxis: {
+//         lines: {
+//           show: true
+//         }
+//       }
+//     },
+//     xaxis: {
+//       categories: ['1h', '2h', '3h', '4h', '5h', '6h'],
+//       labels: {
+//         style: {
+//           colors: labelColor,
+//           fontSize: '12px',
+//           fontFamily: 'Pretendard'
+//         }
+//       },
+//       axisBorder: {
+//         show: false
+//       },
+//       axisTicks: {
+//         show: false
+//       }
+//     },
+//     yaxis: {
+//       labels: {
+//         style: {
+//           colors: labelColor,
+//           fontSize: '12px',
+//           fontFamily: 'Pretendard'
+//         },
+//         formatter: function(value) {
+//           return `${value}%`
+//         }
+//       }
+//     },
+//     tooltip: {
+//       enabled: true,
+//       theme: tooltipTheme,
+//       y: {
+//         formatter: function(value) {
+//           return `${value}%`
+//         }
+//       },
+//       marker: {
+//         show: true
+//       }
+//     },
+//     legend: {
+//       position: 'top',
+//       horizontalAlign: 'left',
+//       fontSize: '13px',
+//       fontFamily: 'Pretendard',
+//       height: 40,
+//       markers: {
+//         width: 12,
+//         height: 12,
+//         strokeWidth: 0,
+//         radius: 2,
+//         offsetX: 0,
+//         offsetY: 0
+//       },
+//       itemMargin: {
+//         horizontal: 45,
+//         vertical: 0
+//       },
+//       formatter: function(seriesName, opts) {
+//         return ['   ' + seriesName + '   ']
+//       }
+//     }
+//   }), [labelColor, tooltipTheme, gridColor])
+
+//   const chartData = useMemo(() => [
+//     {
+//       name: 'CPU 사용량',
+//       data: [65, 72, 78, 75, 82, 78]
+//     },
+//     {
+//       name: 'GPU 사용량',
+//       data: [45, 55, 85, 78, 92, 88]
+//     }
+//   ], [])
+import axios from 'axios';  // axios를 사용하여 API 호출
+
+type ChartData = {
+  name: string;
+  data: number[];
+};
+
+const ResourceUsageStats = memo(() => {
+  const [chartData, setChartData] = useState<ChartData[]>([]);  // 차트 데이터를 저장할 상태
+
+  const [cpuUsage, setCpuUsage] = useState(null); // CPU 사용량
+  const [cpuCoreTotal, setCpuCoreTotal] = useState(null); // 총 CPU 코어 수
+  const [cpuCoreUsing, setCpuCoreUsing] = useState(null); // 사용 중인 CPU 코어 수
+
+  const [gpuUtilization, setGpuUtilization] = useState(null); // GPU 사용량
+  const [gpuName, setGpuName] = useState(null); // GPU 이름
+  const [gpuMemoryTotal, setGpuMemoryTotal] = useState(null); // GPU 총 메모리
+
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const labelColor = useColorModeValue('#1F2C5C', '#CBD5E0');
+  const tooltipTheme = useColorModeValue('light', 'dark');
+  const gridColor = useColorModeValue('#f1f1f1', '#2D3748');
+
+  const isToday = (timeString) => {
+    const currentDate = new Date();
+    const timeDate = new Date(timeString);
+    return (
+      currentDate.getFullYear() === timeDate.getFullYear() &&
+      currentDate.getMonth() === timeDate.getMonth() &&
+      currentDate.getDate() === timeDate.getDate()
+    );
+  };
+
+  // API로부터 데이터를 가져와서 차트 데이터 업데이트
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('http://192.168.219.52:8686/api/resource-monitoring');
+      const data = response.data;
+      
+  
+      // 오늘 날짜에 해당하는 데이터만 필터링
+      const todayData = data.filter(item => isToday(item.time));
+      const time = todayData.map(item => item.time);  // X축: 오늘의 시간
+      const cpuUsage = todayData.map(item => item.cpu);  // CPU 사용량
+      const gpuUsage = todayData.map(item => parseInt(item.gpu.gpu_utilization));  // GPU 사용량
+  
+      // 필터링된 데이터를 chartData에 업데이트
+      setChartData([
+        {
+          name: 'CPU 사용량',
+          data: cpuUsage,
+          time: time,
+        },
+        {
+          name: 'GPU 사용량',
+          data: gpuUsage,
+          time: time,
+        }
+      ]);
+
+
+      const latestData = data[data.length - 1]; // 최신 데이터
+      setCpuUsage(latestData.cpu); // CPU 사용량 (백분율)
+      setCpuCoreTotal(latestData.cpu_core_total); // 총 CPU 코어 수
+      setCpuCoreUsing(latestData.cpu_core_using); // 사용 중인 CPU 코어 수
+
+      setGpuUtilization(latestData.gpu.gpu_utilization); // GPU 사용량
+      setGpuName(latestData.gpu.gpu_name); // GPU 이름
+      setGpuMemoryTotal(latestData.gpu.gpu_memory_total); // GPU 총 메모리
+
+    } catch (error) {
+      console.error("데이터를 가져오는 중 오류 발생: ", error);
+    }
+  };
+  
+
+  useEffect(() => {
+    fetchData();  // 컴포넌트가 마운트되면 API 호출
+  }, []);
+
+  // 차트 옵션 설정
   const chartOptions = useMemo(() => ({
     chart: {
       type: 'area',
       height: 350,
       toolbar: {
-        show: true
+        show: true,
       },
       animations: {
         enabled: true,
@@ -1000,11 +1214,11 @@ const ResourceUsageStats = memo(() => {
         speed: 800,
       },
       background: 'transparent',
-      fontFamily: 'Pretendard'
+      fontFamily: 'Pretendard',
     },
     stroke: {
       width: [3, 3],
-      curve: 'smooth'
+      curve: 'smooth',
     },
     colors: ['#FF6B00', '#1F2C5C'],
     fill: {
@@ -1015,8 +1229,8 @@ const ResourceUsageStats = memo(() => {
         shadeIntensity: 0.5,
         opacityFrom: 0.7,
         opacityTo: 0.1,
-        stops: [50, 100]
-      }
+        stops: [50, 100],
+      },
     },
     markers: {
       size: 4,
@@ -1025,65 +1239,66 @@ const ResourceUsageStats = memo(() => {
       strokeWidth: 2,
       hover: {
         size: 7,
-        sizeOffset: 3
-      }
+        sizeOffset: 3,
+      },
     },
     dataLabels: {
-      enabled: false
+      enabled: false,
     },
     grid: {
       borderColor: gridColor,
       strokeDashArray: 5,
       xaxis: {
         lines: {
-          show: true
-        }
+          show: true,
+        },
       },
       yaxis: {
         lines: {
-          show: true
-        }
-      }
+          show: true,
+        },
+      },
     },
     xaxis: {
-      categories: ['1h', '2h', '3h', '4h', '5h', '6h'],
+      categories: chartData.length > 0 ? chartData[0].time : [],
       labels: {
         style: {
           colors: labelColor,
           fontSize: '12px',
-          fontFamily: 'Pretendard'
+          fontFamily: 'Pretendard',
         }
       },
       axisBorder: {
-        show: false
+        show: false,
       },
       axisTicks: {
-        show: false
-      }
+        show: false,
+      },
+      tickAmount: 12,  // 하루 동안 24개의 시간만큼의 레이블을 표시
     },
     yaxis: {
       labels: {
         style: {
           colors: labelColor,
           fontSize: '12px',
-          fontFamily: 'Pretendard'
+          fontFamily: 'Pretendard',
         },
-        formatter: function(value) {
-          return `${value}%`
-        }
-      }
+        formatter: function (value) {
+          return `${value}%`;  // Y축은 %로 표시
+        },
+      },
     },
     tooltip: {
       enabled: true,
       theme: tooltipTheme,
       y: {
-        formatter: function(value) {
-          return `${value}%`
-        }
+        formatter: function (value) {
+          return `${value}%`;  // 툴팁에 % 표시
+        },
       },
       marker: {
-        show: true
-      }
+        show: true,
+      },
     },
     legend: {
       position: 'top',
@@ -1097,28 +1312,19 @@ const ResourceUsageStats = memo(() => {
         strokeWidth: 0,
         radius: 2,
         offsetX: 0,
-        offsetY: 0
+        offsetY: 0,
       },
       itemMargin: {
         horizontal: 45,
-        vertical: 0
+        vertical: 0,
       },
-      formatter: function(seriesName, opts) {
-        return ['   ' + seriesName + '   ']
-      }
-    }
-  }), [labelColor, tooltipTheme, gridColor])
-
-  const chartData = useMemo(() => [
-    {
-      name: 'CPU 사용량',
-      data: [65, 72, 78, 75, 82, 78]
+      formatter: function (seriesName, opts) {
+        return ['   ' + seriesName + '   '];  // 범례 항목에 여백 추가
+      },
     },
-    {
-      name: 'GPU 사용량',
-      data: [45, 55, 85, 78, 92, 88]
-    }
-  ], [])
+  }), [labelColor, tooltipTheme, gridColor, chartData]);
+
+
 
   return (
     <DashboardCard title="리소스 모니터링" icon={FiServer}>
@@ -1132,7 +1338,7 @@ const ResourceUsageStats = memo(() => {
             borderColor={useColorModeValue('orange.100', 'gray.600')}
           >
             <VStack spacing={2} align="start">
-              <HStack spacing={3}>
+              {/* <HStack spacing={3}>
                 <Icon as={FiCpu} color="orange.500" />
                 <Text fontSize="sm" color="gray.500">CPU 현재 사용량</Text>
               </HStack>
@@ -1149,6 +1355,48 @@ const ResourceUsageStats = memo(() => {
                   <Text fontSize="sm" fontWeight="medium">정상</Text>
                   <Text fontSize="xs" color="gray.500">8 코어 중 6.2 코어</Text>
                 </VStack>
+              </HStack> */}
+              <HStack spacing={3}>
+                <Icon as={FiCpu} color="orange.500" />
+                <Text fontSize="sm" color="gray.500">CPU 현재 사용량</Text>
+              </HStack>
+              <HStack spacing={2} align="center">
+                <CircularProgress
+                  value={cpuUsage ?? 0}  // CPU 사용량 (없으면 0)
+                  color={
+                    (cpuUsage ?? 0) <= 50 ? "green.500" : // 정상
+                    (cpuUsage ?? 0) > 50 && (cpuUsage ?? 0) < 70 ? "yellow.500" : // 경고
+                    (cpuUsage ?? 0) >= 70 && (cpuUsage ?? 0) < 85 ? "orange.500" : // 주의
+                    (cpuUsage ?? 0) >= 85 && (cpuUsage ?? 0) < 95 ? "red.500" : // 심각
+                    "red.600" // 과부하
+                  }
+                  size="50px"
+                  thickness="8px"
+                >
+                  <CircularProgressLabel fontWeight="bold">{cpuUsage ?? 0}%</CircularProgressLabel>
+                </CircularProgress>
+                <VStack spacing={0} align="start">
+                <Text fontSize="sm" fontWeight="medium">
+                {
+                  (cpuUsage ?? 0) <= 50 ? "정상" :
+                  (cpuUsage ?? 0) > 50 && (cpuUsage ?? 0) < 70 ? "경고" :
+                  (cpuUsage ?? 0) >= 70 && (cpuUsage ?? 0) < 85 ? "주의" :
+                  (cpuUsage ?? 0) >= 85 && (cpuUsage ?? 0) < 95 ? "심각" :
+                  "과부하"
+                }
+                </Text>
+                  {cpuCoreTotal && cpuCoreUsing ? (
+                    // CPU 코어 정보가 있을 경우 표시
+                    <Text fontSize="xs" color="gray.500">
+                      {cpuCoreTotal} 코어 중 {cpuCoreUsing} 코어 사용 중
+                    </Text>
+                  ) : (
+                    // 데이터가 없을 경우 메시지 표시
+                    <Text fontSize="xs" color="gray.500">
+                      CPU 정보가 없습니다
+                    </Text>
+                  )}
+                </VStack>
               </HStack>
             </VStack>
           </Box>
@@ -1161,7 +1409,7 @@ const ResourceUsageStats = memo(() => {
             borderColor={useColorModeValue('blue.100', 'gray.600')}
           >
             <VStack spacing={2} align="start">
-              <HStack spacing={3}>
+              {/* <HStack spacing={3}>
                 <Icon as={FiCpu} color="blue.500" />
                 <Text fontSize="sm" color="gray.500">GPU 현재 사용량</Text>
               </HStack>
@@ -1178,7 +1426,51 @@ const ResourceUsageStats = memo(() => {
                   <Text fontSize="sm" fontWeight="medium">주의</Text>
                   <Text fontSize="xs" color="gray.500">NVIDIA RTX 4090 Ti - 24GB</Text>
                 </VStack>
+              </HStack> */}
+              <HStack spacing={3}>
+                <Icon as={FiCpu} color="blue.500" />
+                <Text fontSize="sm" color="gray.500">GPU 현재 사용량</Text>
               </HStack>
+              <HStack spacing={2} align="center">
+                <CircularProgress
+                  value={parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0}  // GPU 사용량 (없으면 0, % 기호 제거 후 숫자로 변환)
+                  color={
+                    (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) <= 50 ? "green.500" :  // 정상
+                    (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) > 50 && (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) < 70 ? "yellow.500" :  // 경고
+                    (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) >= 70 && (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) < 85 ? "orange.500" :  // 주의
+                    (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) >= 85 && (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) < 95 ? "red.500" :  // 심각
+                    "red.600"  // 과부하
+                  }
+                  size="50px"
+                  thickness="8px"
+                >
+                  <CircularProgressLabel fontWeight="bold">{gpuUtilization || "0%"}</CircularProgressLabel>
+                </CircularProgress>
+                <VStack spacing={0} align="start">
+                  <Text fontSize="sm" fontWeight="medium">
+                    {
+                      // Chuyển gpuUtilization từ chuỗi thành số và xử lý các mức cảnh báo
+                      (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) <= 50 ? "정상" :
+                      (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) > 50 && (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) < 70 ? "경고" :
+                      (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) >= 70 && (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) < 85 ? "주의" :
+                      (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) >= 85 && (parseFloat((gpuUtilization ?? "0%").replace('%', '')) || 0) < 95 ? "심각" :
+                      "과부하"
+                    }
+                  </Text>
+                  {gpuName && gpuMemoryTotal ? (
+                    // GPU 정보가 있을 경우 표시
+                    <Text fontSize="xs" color="gray.500">
+                      {gpuName} - {gpuMemoryTotal}
+                    </Text>
+                  ) : (
+                    // 데이터가 없을 경우 메시지 표시
+                    <Text fontSize="xs" color="gray.500">
+                      GPU 정보가 없습니다
+                    </Text>
+                  )}
+                </VStack>
+              </HStack>
+
             </VStack>
           </Box>
         </SimpleGrid>
