@@ -1156,7 +1156,7 @@ const ResourceUsageStats = memo(() => {
   // API로부터 데이터를 가져와서 차트 데이터 업데이트
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://192.168.219.52:8686/api/resource-monitoring');
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/workflows`);
       const data = response.data;
       
   
