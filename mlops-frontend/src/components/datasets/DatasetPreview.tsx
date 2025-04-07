@@ -316,13 +316,38 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
                   <Text fontWeight="bold" mb={4}>시계열 트렌드</Text>
                   <Box h="300px">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={data}>
+                      {/* <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="timestamp" />
+                        <XAxis dataKey="INPUT_DATE" />
                         <YAxis />
                         <RechartsTooltip />
                         <Line type="monotone" dataKey="temperature" stroke="#3182CE" />
                         <Line type="monotone" dataKey="humidity" stroke="#38A169" />
+                      </LineChart> */}
+                      <LineChart data={data}>
+                        <CartesianGrid strokeDasharray="3 3" />
+
+                        {/* X축의 날짜/시간 열 자동 찾기*/}
+                        <XAxis
+                          dataKey={
+                            dataset?.features?.find(f => f.type.includes('datetime'))?.name || 'INPUT_DATE'
+                          }
+                        />
+
+                        <YAxis />
+                        <RechartsTooltip />
+
+                        {/* 숫자 열 자동 그리기 */}
+                        {dataset?.features
+                          ?.filter(f => ['int64', 'float64'].includes(f.type))
+                          .map((feature, idx) => (
+                            <Line
+                              key={feature.name}
+                              type="monotone"
+                              dataKey={feature.name}
+                              stroke={['#3182CE', '#38A169', '#DD6B20', '#805AD5'][idx % 4]}
+                            />
+                        ))}
                       </LineChart>
                     </ResponsiveContainer>
                   </Box>
@@ -330,7 +355,7 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
               </Card>
 
               {/* 상관관계 시각화 */}
-              <Card bg={bgCard} borderColor={borderColor} borderWidth={1}>
+              {/* <Card bg={bgCard} borderColor={borderColor} borderWidth={1}>
                 <CardBody>
                   <Text fontWeight="bold" mb={4}>변수 간 상관관계</Text>
                   <Box h="300px">
@@ -345,7 +370,56 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
                     </ResponsiveContainer>
                   </Box>
                 </CardBody>
-              </Card>
+              </Card> */}
+              {/* 상관관계 시각화 */}
+              {dataset?.features && (
+                (() => {
+                  const numericCols = dataset.features.filter(
+                    (f: any) => f.type.includes('int') || f.type.includes('float')
+                  ).map((f: any) => f.name)
+
+                  // Tạo các cặp (x, y) không trùng nhau
+                  const pairs = []
+                  for (let i = 0; i < numericCols.length; i++) {
+                    for (let j = i + 1; j < numericCols.length; j++) {
+                      pairs.push({ xKey: numericCols[i], yKey: numericCols[j] })
+                    }
+                  }
+
+                  if (pairs.length === 0) {
+                    return (
+                      <Card bg={bgCard} borderColor={borderColor} borderWidth={1}>
+                        <CardBody>
+                          <Text color="gray.500">시각화를 위한 숫자형 컬럼이 충분하지 않습니다.</Text>
+                        </CardBody>
+                      </Card>
+                    )
+                  }
+
+                  return (
+                    <>
+                      {pairs.map(({ xKey, yKey }, idx) => (
+                        <Card key={`${xKey}-${yKey}-${idx}`} bg={bgCard} borderColor={borderColor} borderWidth={1}>
+                          <CardBody>
+                            <Text fontWeight="bold" mb={4}>{xKey} vs {yKey}</Text>
+                            <Box h="300px">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <ScatterChart>
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis dataKey={xKey} name={xKey} />
+                                  <YAxis dataKey={yKey} name={yKey} />
+                                  <RechartsTooltip />
+                                  <Scatter data={data} fill="#3182CE" />
+                                </ScatterChart>
+                              </ResponsiveContainer>
+                            </Box>
+                          </CardBody>
+                        </Card>
+                      ))}
+                    </>
+                  )
+                })()
+              )}
             </Grid>
           </TabPanel>
         </TabPanels>
