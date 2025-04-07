@@ -136,11 +136,11 @@ export function ModelCard({ model, isSelected = false, onSelect, onViewDetails, 
               <HStack justify="space-between">
                 <Text color="gray.500">정확도</Text>
                 <Text fontWeight="bold" color={accentText}>
-                  {(model.accuracy * 100).toFixed(1)}%
+                  {(model.accuracy).toFixed(1)}%
                 </Text>
               </HStack>
               <Progress
-                value={model.accuracy * 100}
+                value={model.accuracy}
                 colorScheme="brand"
                 size="sm"
                 borderRadius="full"
@@ -222,7 +222,7 @@ export function ModelCard({ model, isSelected = false, onSelect, onViewDetails, 
               <HStack>
                 <Text color="gray.500">정확도:</Text>
                 <Text fontWeight="bold" color={accentText}>
-                  {(model.accuracy * 100).toFixed(1)}%
+                  {(model.accuracy).toFixed(1)}%
                 </Text>
               </HStack>
             </Stack>

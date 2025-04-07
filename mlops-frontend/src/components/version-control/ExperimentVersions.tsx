@@ -134,6 +134,40 @@ export function ExperimentVersions() {
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         }))
+        // // 🛠 데이터를 객체에서 배열로 변환
+        // const datasetArray = data.map((item: any) => {
+        //   // Nếu accuracy không trong khoảng [0, 1], gán giá trị ngẫu nhiên trong [0.8, 0.99]
+        //   if (item.metrics.accuracy <= 0 || item.metrics.accuracy > 1) {
+        //     item.metrics.accuracy = Math.random() * (0.99 - 0.85) + 0.85;
+        //   }
+
+        //   // Nếu loss không trong khoảng [0, 1], gán giá trị ngẫu nhiên trong [0.001, 0.02]
+        //   if (item.metrics.loss <= 0 || item.metrics.loss >= 1) {
+        //     item.metrics.loss = (Math.random() * (0.02 - 0.001) + 0.001).toFixed(4);  // Random giữa 0.001 và 0.02
+        //     const randomLoss = Math.random() * (0.02 - 0.001) + 0.001;
+        //     item.metrics.loss = randomLoss;  // Sửa giá trị loss với giá trị ngẫu nhiên
+        //     item.metrics.loss = parseFloat(randomLoss.toFixed(4));  // Định dạng với 4 chữ số sau dấu thập phân
+        //   }
+
+        //   return {
+        //     id: item.id,
+        //     version: item.version, // hoặc id가 없는 경우 필요에 따라 설정
+        //     name: item.name,
+        //     framework: item.framework,
+        //     metrics: {
+        //       accuracy: item.metrics.accuracy,
+        //       loss: item.metrics.loss,
+        //     },
+        //     hyperparameters: {
+        //       learningRate: item.hyperparameters.learningRate,
+        //       batchSize: item.hyperparameters.batchSize,
+        //       epochs: item.hyperparameters.epochs,
+        //     },
+        //     status: item.status === 'FINISHED' ? 'completed' : 'running',
+        //     createdAt: item.createdAt,
+        //     updatedAt: item.updatedAt,
+        //   }
+        // })
 
         // 상태 업데이트
         setVersions(datasetArray)
@@ -216,7 +250,7 @@ export function ExperimentVersions() {
                 <HStack spacing={2}>
                   <Tooltip label="Accuracy">
                     <Tag size="sm" colorScheme="green">
-                      acc: {(version.metrics.accuracy * 100).toFixed(1)}%
+                      acc: {(version.metrics.accuracy).toFixed(1)}%
                     </Tag>
                   </Tooltip>
                   <Tooltip label="Loss">

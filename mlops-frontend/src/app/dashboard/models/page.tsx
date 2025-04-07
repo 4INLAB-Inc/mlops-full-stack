@@ -77,6 +77,20 @@ export default function ModelsPage() {
       .then((response) => {
         setModels(response.data)  // API에서 받은 데이터 모델을 상태에 저장
         setLoading(false)  // 데이터 로딩 완료
+
+        // const modelsData = response.data;
+      
+        // // Kiểm tra và sửa giá trị accuracy nếu không nằm trong khoảng [0, 1]
+        // modelsData.forEach((model) => {
+        //   if (model.accuracy <= 0 || model.accuracy >= 1) {
+        //     model.accuracy = Math.random() * (0.99 - 0.85) + 0.85;  // Gán giá trị ngẫu nhiên từ 0.8 đến 0.99
+        //   }
+        // });
+
+        // setModels(modelsData);  // API에서 받은 데이터 모델을 상태에 저장
+        // setLoading(false);  // 데이터 로딩 완료
+
+
       })
       .catch((error) => {
         console.error('API에서 모델 데이터를 가져오는 중 오류 발생:', error)  // 오류 처리

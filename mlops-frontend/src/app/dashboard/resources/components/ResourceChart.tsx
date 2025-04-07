@@ -34,7 +34,7 @@ interface ResourceChartProps {
 
 export function ResourceChart({ data, height = '300px' }: ResourceChartProps) {
   const gridColor = useColorModeValue('rgba(0, 0, 0, 0.1)', 'rgba(255, 255, 255, 0.1)')
-  const tooltipBackgroundColor = useColorModeValue('rgba(255, 255, 255, 0.9)', 'rgba(0, 0, 0, 0.9)')
+  const tooltipBackgroundColor = useColorModeValue('rgba(19, 18, 18, 0.9)', 'rgba(0, 0, 0, 0.9)')
   const textColor = useColorModeValue('rgba(0, 0, 0, 0.7)', 'rgba(255, 255, 255, 0.7)')
 
   const chartData = {
@@ -107,6 +107,17 @@ export function ResourceChart({ data, height = '300px' }: ResourceChartProps) {
         padding: 12,
         cornerRadius: 8,
         boxPadding: 6,
+        callbacks: {
+          label: (context: any) => {
+            const label = context.dataset.label || '';
+            const value = context.parsed.y;
+            // if having 사용률, adding %
+            if (label.includes('사용률')) {
+              return `${label}: ${value}%`;
+            }
+            return `${label}: ${value}`;
+          },
+        },    
       },
     },
     scales: {
@@ -118,6 +129,7 @@ export function ResourceChart({ data, height = '300px' }: ResourceChartProps) {
           maxRotation: 0,
           padding: 10,
           color: textColor,
+          maxTicksLimit: 24, // Max. labels number in X axis
         },
       },
       y: {

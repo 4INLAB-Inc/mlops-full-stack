@@ -134,7 +134,7 @@ export function ExperimentCard({ experiment, isSelected, onClick, onDoubleClick 
                   fontWeight="bold"
                   color={accentText}
                 >
-                  {(experiment.metrics.accuracy * 100).toFixed(1)}%
+                  {(experiment.metrics.accuracy).toFixed(1)}%
                 </Text>
               </Stack>
               <Stack flex={1}>

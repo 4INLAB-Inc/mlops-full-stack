@@ -68,10 +68,14 @@ export function ResourceTable({ data }: ResourceTableProps) {
                   />
                 </Box>
               </Td>
-              <Td isNumeric>{(group.ramTotal / 1024).toFixed(2)}</Td>
-              <Td isNumeric>{(group.ramFree / 1024).toFixed(2)}</Td>
+              <Td isNumeric>{(group.ramTotal).toFixed(2)}</Td>
+              <Td isNumeric>{(group.ramFree).toFixed(2)}</Td>
               <Td isNumeric>{group.freeHomeSpace.toFixed(2)}</Td>
-              <Td>{group.networkTwin}</Td>
+              {/* <Td>{group.networkStatus}</Td> */}
+              <Td>
+              Up: {group.networkStatus.upload} Mbps<br />
+              Down: {group.networkStatus.download} Mbps
+            </Td>
             </Tr>
           ))}
         </Tbody>

@@ -688,7 +688,15 @@ interface ModelPerformanceData {
 
 // ModelPerformance 컴포넌트 메모이제이션
 const ModelPerformance = memo(() => {
-  const [selectedModel, setSelectedModel] = useState<string | null>(null);
+
+  const [selectedModel, setSelectedModel] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('selectedModel') || null;
+    }
+    return null;
+  });
+
+
   const [selectedModelID, setSelectedModelID] = useState<string | null>(null); // ✅ Model ID 저장 (API 용)
   const [models, setModels] = useState<Model[]>([]);
   const [performanceData, setPerformanceData] = useState<ModelPerformanceData>({});
@@ -710,20 +718,15 @@ const ModelPerformance = memo(() => {
             
             // 📌 JSON 응답 변환
             const allModels = await response.json();
-
-            // 📌 모델 목록 상태 업데이트
             setModels(allModels);
-
-            // ✅ 버전이 가장 높은 모델을 기준으로 목록 정렬
-            const sortedModels = allModels.sort((a, b) => (b.version || 0) - (a.version || 0));
-
-            // // ✅ 버전이 가장 높은 모델을 기본 선택 모델로 설정
-            if (sortedModels.length > 0) {
-                if (sortedModels && !selectedModel) {
-                  setSelectedModel(sortedModels[0].name);
-                }
+    
+            const saved = localStorage.getItem('selectedModel');
+            if (!saved && allModels.length > 0) {
+              const sortedModels = allModels.sort((a, b) => (b.version || 0) - (a.version || 0));
+              const defaultModel = sortedModels[0].name;
+              setSelectedModel(defaultModel);
+              localStorage.setItem('selectedModel', defaultModel);
             }
-            // 학습 중인 모델이 있으면 자동 선택
             
           } catch (error) {
               console.error('모델 데이터를 가져오는 중 오류 발생:', error);
@@ -731,7 +734,7 @@ const ModelPerformance = memo(() => {
       };
 
     fetchModels();
-  }, [selectedModel]);
+  }, []);
 
   
   useEffect(() => {
@@ -779,8 +782,8 @@ const ModelPerformance = memo(() => {
 
 
   const handleModelChange = (modelName: string) => {
-    console.log("Model changed to:", modelName);
     setSelectedModel(modelName);
+    localStorage.setItem('selectedModel', modelName); // lưu lại
   };
 
   // 차트 옵션 (이전과 동일)
@@ -831,6 +834,10 @@ const ModelPerformance = memo(() => {
     xaxis: {
       // categories: ['Epoch 1', 'Epoch 2', 'Epoch 3', 'Epoch 4', 'Epoch 5'],
       categories: xAxisCategories,
+      tickAmount: 20, // 👈 Limit to max 20 ticks (labels)
+      title: {
+        text: 'Epochs'
+      },
       labels: {
         style: {
           colors: '#64748B',
@@ -1156,7 +1163,7 @@ const ResourceUsageStats = memo(() => {
   // API로부터 데이터를 가져와서 차트 데이터 업데이트
   const fetchData = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/resource-monitoring`);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/resource-monitoring/dashboard`);
       const data = response.data;
       
   
@@ -1266,7 +1273,7 @@ const ResourceUsageStats = memo(() => {
           colors: labelColor,
           fontSize: '12px',
           fontFamily: 'Pretendard',
-        }
+        },
       },
       axisBorder: {
         show: false,
@@ -2519,7 +2526,7 @@ const useDashboardData = () => {
   useEffect(() => {
     fetchData()
     // 30초마다 데이터 새로고침
-    const interval = setInterval(fetchData, 30000)
+    const interval = setInterval(fetchData, 60000)
     return () => clearInterval(interval)
   }, [fetchData])
 

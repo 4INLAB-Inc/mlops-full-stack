@@ -6,7 +6,7 @@ export interface ResourceGroup {
   ramTotal: number
   ramFree: number
   freeHomeSpace: number
-  networkTwin: string
+  networkStatus: string
 }
 
 export interface ClusterMetrics {

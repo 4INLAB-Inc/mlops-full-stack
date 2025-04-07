@@ -43,7 +43,7 @@ export default function NewExperimentPage() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const response = await fetch('http://192.168.219.52:8686/api/create/options');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/create/options`);
         if (!response.ok) throw new Error('Failed to fetch options');
 
         const data = await response.json();

@@ -440,7 +440,7 @@ export default function ModelDetailClient({ modelId }: ModelDetailClientProps) {
                                 <SimpleGrid columns={3} spacing={4}>
                                   <Stat size="sm">
                                     <StatLabel color="gray.500">정확도</StatLabel>
-                                    <StatNumber>{(version.metrics.accuracy * 100).toFixed(1)}%</StatNumber>
+                                    <StatNumber>{(version.metrics.accuracy).toFixed(1)}%</StatNumber>
                                     {index < modelData.versions.length - 1 && (
                                       <StatHelpText>
                                         <StatArrow 

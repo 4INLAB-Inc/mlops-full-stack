@@ -177,6 +177,39 @@ function SidebarContent({ currentPath, isCollapsed, onToggle }: {
         { name: '설정', icon: FiSettings, href: '/dashboard/settings' },
       ]
     }
+    // {
+    //   title: 'Overview',
+    //   items: [
+    //     { name: 'Dashboard', icon: FiHome, href: '/dashboard' },
+    //     { name: 'Monitoring', icon: FiMonitor, href: '/dashboard/monitoring' },
+    //     { name: 'Alerts', icon: FiAlertCircle, href: '/dashboard/alerts' },
+    //   ]
+    // },
+    // {
+    //   title: 'MLOps',
+    //   items: [
+    //     { name: 'Experiments', icon: FiActivity, href: '/dashboard/experiments' },
+    //     { name: 'Models', icon: FiServer, href: '/dashboard/models' },
+    //     { name: 'Datasets', icon: FiDatabase, href: '/dashboard/datasets' },
+    //     { name: 'Pipelines', icon: FiLayers, href: '/dashboard/pipeline' },
+    //     { name: 'Version Control', icon: FiGitBranch, href: '/dashboard/versions' },
+    //   ]
+    // },
+    // {
+    //   title: 'Infrastructure',
+    //   items: [
+    //     { name: 'Resources', icon: FiTrendingUp, href: '/dashboard/resources' },
+    //     { name: 'Computing', icon: FiCpu, href: '/dashboard/computing' },
+    //     { name: 'Packages', icon: FiPackage, href: '/dashboard/packages' },
+    //   ]
+    // },
+    // {
+    //   title: 'Admin',
+    //   items: [
+    //     { name: 'Settings', icon: FiSettings, href: '/dashboard/settings' },
+    //   ]
+    // }
+    
   ]
 
   return (

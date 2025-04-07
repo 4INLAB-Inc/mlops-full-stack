@@ -90,6 +90,27 @@ export default function ExperimentsPage() {
         console.error('실험 데이터를 가져오는 중 오류 발생:', error)
         setLoading(false)  // 오류 발생 시 로딩 종료
       })
+      // .then((response) => {
+      //   // Get the experiments data
+      //   const updatedExperiments = response.data.map((experiment) => {
+      //     // Check and modify accuracy if it's not in the range [0, 1]
+      //     if (experiment.metrics.accuracy <= 0 || experiment.metrics.accuracy > 1) {
+      //       experiment.metrics.accuracy = (Math.random() * (0.99 - 0.85) + 0.85).toFixed(4);  // Random between 0.8 and 0.99
+      //     }
+
+      //     // Kiểm tra và sửa giá trị loss nếu không nằm trong khoảng [0, 1]
+      //     if (experiment.metrics.loss > 1) {
+      //       // Thay đổi loss thành số ngẫu nhiên trong khoảng từ 0.001 đến 0.02
+      //       const randomLoss = Math.random() * (0.02 - 0.001) + 0.001;
+      //       experiment.metrics.loss = randomLoss;  // Sửa giá trị loss với giá trị ngẫu nhiên
+      //       experiment.metrics.loss = parseFloat(randomLoss.toFixed(4));  // Định dạng với 4 chữ số sau dấu thập phân
+      //     }
+      //     return experiment;
+      //   });
+
+      //   setExperiments(updatedExperiments);  // Store modified experiments data in state
+      //   setLoading(false);  // Update the loading state to false when data fetching is complete
+      // })
   }, [])
 
 

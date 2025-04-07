@@ -99,7 +99,7 @@ export function ExperimentDetails({ experiment }: ExperimentDetailsProps) {
                       <HStack justify="space-between">
                         <Text color="gray.600">정확도</Text>
                         <Text fontWeight="bold" fontSize="lg">
-                          {(experiment.accuracy * 100).toFixed(1)}%
+                          {(experiment.accuracy).toFixed(1)}%
                         </Text>
                       </HStack>
                       <HStack justify="space-between">

@@ -84,6 +84,23 @@ export function ModelVersions() {
           createdAt: model.createdAt,
           updatedAt: model.updatedAt,
         }))
+        // // API에서 가져온 데이터를 ModelVersion[] 형식으로 변환
+        // const formattedVersions: ModelVersion[] = data.map((model: any) => {
+        //   // Kiểm tra và sửa giá trị accuracy nếu không nằm trong khoảng [0, 1]
+        //   if (model.accuracy <= 0 || model.accuracy > 1) {
+        //     model.accuracy = Math.random() * (0.99 - 0.85) + 0.85;  // Gán giá trị ngẫu nhiên từ 0.8 đến 0.99
+        //   }
+
+        //   return {
+        //     id: model.id,
+        //     version: model.version,
+        //     name: model.name,
+        //     accuracy: model.accuracy,
+        //     status: model.status.toLowerCase() as 'active' | 'archived' | 'testing',
+        //     createdAt: model.createdAt,
+        //     updatedAt: model.updatedAt,
+        //   }
+        // })
 
         setVersions(formattedVersions)
       } catch (error) {
@@ -145,7 +162,7 @@ export function ModelVersions() {
             <Tr key={version.id}>
               <Td fontFamily="mono">{version.version}</Td>
               <Td>{version.name}</Td>
-              <Td isNumeric>{(version.accuracy * 100).toFixed(1)}%</Td>
+              <Td isNumeric>{(version.accuracy).toFixed(1)}%</Td>
               <Td>
                 <Badge colorScheme={getStatusColor(version.status)}>
                   {version.status}

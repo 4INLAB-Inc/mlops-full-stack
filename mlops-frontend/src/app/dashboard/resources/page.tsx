@@ -34,14 +34,40 @@ export default function ResourcesPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const toast = useToast()
 
+  // const fetchData = async () => {
+  //   try {
+  //     setIsRefreshing(true)
+  //     // 실제 API 연동 시에는 아래 주석을 해제하고 generateMockData를 제거
+  //     // const monitoringData = await fetchResourceMonitoring()
+  //     // const historyData = await fetchResourceHistory(timeRange)
+  //     const mockData = generateMockData()
+  //     setData(mockData)
+  //   } catch (error) {
+  //     console.error('Error fetching resource data:', error)
+  //     toast({
+  //       title: '데이터 로딩 실패',
+  //       description: '리소스 모니터링 데이터를 불러오는데 실패했습니다.',
+  //       status: 'error',
+  //       duration: 5000,
+  //       isClosable: true,
+  //     })
+  //   } finally {
+  //     setIsLoading(false)
+  //     setIsRefreshing(false)
+  //   }
+  // }
   const fetchData = async () => {
     try {
       setIsRefreshing(true)
-      // 실제 API 연동 시에는 아래 주석을 해제하고 generateMockData를 제거
-      // const monitoringData = await fetchResourceMonitoring()
-      // const historyData = await fetchResourceHistory(timeRange)
-      const mockData = generateMockData()
-      setData(mockData)
+  
+      const response = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/resource-monitoring/total`)
+      if (!response.ok) {
+        throw new Error(`API 호출 오류: ${response.status}`)
+      }
+  
+      const realData = await response.json()
+      setData(realData)
+  
     } catch (error) {
       console.error('Error fetching resource data:', error)
       toast({
@@ -73,6 +99,11 @@ export default function ResourcesPage() {
 
   if (!data) {
     return null
+  }
+
+  const getRangeInMs = (range: string): number => {
+    const hours = parseInt(range.replace('h', ''))
+    return hours * 60 * 60 * 1000
   }
 
   return (
@@ -132,7 +163,13 @@ export default function ResourcesPage() {
             </HStack>
           </CardHeader>
           <CardBody>
-            <ResourceChart data={data.history} height="300px" />
+          <ResourceChart
+            data={data.history.filter((entry) => {
+              const now = Date.now()
+              return now - entry.timestamp <= getRangeInMs(timeRange)
+            })}
+            height="300px"
+          />
           </CardBody>
         </Card>
 

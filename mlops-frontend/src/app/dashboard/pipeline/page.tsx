@@ -108,13 +108,206 @@ interface NodeData {
   error?: string
 }
 
+// const initialNodes: Node[] = [
+//   {
+//     id: '1',
+//     type: 'workflowNode',
+//     position: { x: 100, y: 100 },
+//     data: {
+//       label: '데이터 수집',
+//       type: 'data_collection',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         source: 'Local',
+//         format: 'Csv',
+//         version: 'latest'
+//       },
+//       metrics: {
+//         '데이터 크기': '2.3GB',
+//         '레코드 수': '1.2M'
+//       }
+//     }
+//   },
+//   {
+//     id: '2',
+//     type: 'workflowNode',
+//     position: { x: 500, y: 100 },
+//     data: {
+//       label: '데이터 검증',
+//       type: 'data_validation',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         checks: ['missing_values', 'duplicates', 'data_type'],
+//         threshold: 0.8
+//       },
+//       metrics: {
+//         '유효성': '98.5%',
+//         '누락률': '0.2%'
+//       }
+//     }
+//   },
+//   {
+//     id: '3',
+//     type: 'workflowNode',
+//     position: { x: 900, y: 100 },
+//     data: {
+//       label: '특성 엔지니어링',
+//       type: 'feature_engineering',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         methods: ['scaling', 'encoding', 'selection'],
+//         feature_selection: 'correlation'
+//       },
+//       metrics: {
+//         '선택된 특성': '42개',
+//         '처리 시간': '45s'
+//       }
+//     }
+//   },
+//   {
+//     id: '4',
+//     type: 'workflowNode',
+//     position: { x: 1300, y: 100 },
+//     data: {
+//       label: '데이터 분할',
+//       type: 'data_split',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         train: 0.7,
+//         validation: 0.15,
+//         test: 0.15,
+//         random_state: 42
+//       }
+//     }
+//   },
+//   {
+//     id: '5',
+//     type: 'workflowNode',
+//     position: { x: 1700, y: 100 },
+//     data: {
+//       label: '모델 학습',
+//       type: 'model_training',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         model: 'xgboost',
+//         epochs: 100,
+//         batch_size: 32,
+//         learning_rate: 0.001
+//       },
+//       metrics: {
+//         'Train Loss': '0.234',
+//         'Val Loss': '0.245',
+//         'Train Acc': '0.892',
+//         'Val Acc': '0.885'
+//       }
+//     }
+//   },
+//   {
+//     id: '6',
+//     type: 'workflowNode',
+//     position: { x: 2100, y: 100 },
+//     data: {
+//       label: '모델 평가',
+//       type: 'model_evaluation',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         metrics: ['accuracy', 'precision', 'recall', 'f1'],
+//         cross_validation: 5
+//       },
+//       metrics: {
+//         'Test Acc': '0.883',
+//         'F1 Score': '0.875',
+//         'AUC': '0.912'
+//       }
+//     }
+//   },
+//   {
+//     id: '7',
+//     type: 'workflowNode',
+//     position: { x: 2500, y: 100 },
+//     data: {
+//       label: '모델 분석',
+//       type: 'model_analysis',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         analysis_type: ['feature_importance', 'shap_values'],
+//         visualization: true
+//       },
+//       metrics: {
+//         'Top Feature': 'age',
+//         'Impact Score': '0.324'
+//       }
+//     }
+//   },
+//   {
+//     id: '8',
+//     type: 'workflowNode',
+//     position: { x: 2900, y: 100 },
+//     data: {
+//       label: '모델 버전 관리',
+//       type: 'model_versioning',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         storage: 'mlflow',
+//         tags: ['production', 'latest']
+//       }
+//     }
+//   },
+//   {
+//     id: '9',
+//     type: 'workflowNode',
+//     position: { x: 3300, y: 100 },
+//     data: {
+//       label: '모델 배포',
+//       type: 'model_deployment',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         target: 'production',
+//         version: '1.0',
+//         platform: 'kubernetes'
+//       },
+//       metrics: {
+//         '응답 시간': '120ms',
+//         'TPS': '1000'
+//       }
+//     }
+//   },
+//   {
+//     id: '10',
+//     type: 'workflowNode',
+//     position: { x: 3700, y: 100 },
+//     data: {
+//       label: '모니터링',
+//       type: 'monitoring',
+//       status: 'idle',
+//       progress: 0,
+//       parameters: {
+//         metrics: ['performance', 'drift'],
+//         interval: '1h'
+//       },
+//       metrics: {
+//         '정확도 드리프트': '0.015',
+//         '평균 지연 시간': '85ms'
+//       }
+//     }
+//   }
+// ];
 const initialNodes: Node[] = [
   {
     id: '1',
     type: 'workflowNode',
     position: { x: 100, y: 100 },
     data: {
-      label: '데이터 수집',
+      label: 'Data Collection',
       type: 'data_collection',
       status: 'idle',
       progress: 0,
@@ -124,8 +317,8 @@ const initialNodes: Node[] = [
         version: 'latest'
       },
       metrics: {
-        '데이터 크기': '2.3GB',
-        '레코드 수': '1.2M'
+        'Data Size': '2.3GB',
+        'Record Count': '1.2M'
       }
     }
   },
@@ -134,7 +327,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 500, y: 100 },
     data: {
-      label: '데이터 검증',
+      label: 'Data Validation',
       type: 'data_validation',
       status: 'idle',
       progress: 0,
@@ -143,8 +336,8 @@ const initialNodes: Node[] = [
         threshold: 0.8
       },
       metrics: {
-        '유효성': '98.5%',
-        '누락률': '0.2%'
+        'Validity': '98.5%',
+        'Missing Rate': '0.2%'
       }
     }
   },
@@ -153,7 +346,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 900, y: 100 },
     data: {
-      label: '특성 엔지니어링',
+      label: 'Feature Engineering',
       type: 'feature_engineering',
       status: 'idle',
       progress: 0,
@@ -162,8 +355,8 @@ const initialNodes: Node[] = [
         feature_selection: 'correlation'
       },
       metrics: {
-        '선택된 특성': '42개',
-        '처리 시간': '45s'
+        'Selected Features': '42',
+        'Processing Time': '45s'
       }
     }
   },
@@ -172,7 +365,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 1300, y: 100 },
     data: {
-      label: '데이터 분할',
+      label: 'Data Splitting',
       type: 'data_split',
       status: 'idle',
       progress: 0,
@@ -189,7 +382,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 1700, y: 100 },
     data: {
-      label: '모델 학습',
+      label: 'Model Training',
       type: 'model_training',
       status: 'idle',
       progress: 0,
@@ -212,7 +405,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 2100, y: 100 },
     data: {
-      label: '모델 평가',
+      label: 'Model Evaluation',
       type: 'model_evaluation',
       status: 'idle',
       progress: 0,
@@ -232,7 +425,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 2500, y: 100 },
     data: {
-      label: '모델 분석',
+      label: 'Model Analysis',
       type: 'model_analysis',
       status: 'idle',
       progress: 0,
@@ -251,7 +444,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 2900, y: 100 },
     data: {
-      label: '모델 버전 관리',
+      label: 'Model Versioning',
       type: 'model_versioning',
       status: 'idle',
       progress: 0,
@@ -266,7 +459,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 3300, y: 100 },
     data: {
-      label: '모델 배포',
+      label: 'Model Deployment',
       type: 'model_deployment',
       status: 'idle',
       progress: 0,
@@ -276,7 +469,7 @@ const initialNodes: Node[] = [
         platform: 'kubernetes'
       },
       metrics: {
-        '응답 시간': '120ms',
+        'Response Time': '120ms',
         'TPS': '1000'
       }
     }
@@ -286,7 +479,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 3700, y: 100 },
     data: {
-      label: '모니터링',
+      label: 'Monitoring',
       type: 'monitoring',
       status: 'idle',
       progress: 0,
@@ -295,12 +488,13 @@ const initialNodes: Node[] = [
         interval: '1h'
       },
       metrics: {
-        '정확도 드리프트': '0.015',
-        '평균 지연 시간': '85ms'
+        'Accuracy Drift': '0.015',
+        'Average Latency': '85ms'
       }
     }
   }
 ];
+
 
 const initialEdges: Edge[] = [
   { 
@@ -421,6 +615,18 @@ interface LogEntry {
 
 import axios from 'axios';
 
+// export const edgeTypes = {
+//   bezier: ({ id, sourceX, sourceY, targetX, targetY, style }: EdgeProps) => (
+//     <path
+//       id={id}
+//       d={`M ${sourceX},${sourceY} C ${sourceX + 100},${sourceY} ${targetX - 100},${targetY} ${targetX},${targetY}`}
+//       fill="none"
+//       stroke={style?.stroke || '#ED8936'}
+//       strokeWidth={style?.strokeWidth || 2}
+//       opacity={style?.opacity || 0.8}
+//     />
+//   ),
+// };
 
 function PipelineContent() {
   // 노드 타입 정의
@@ -520,6 +726,16 @@ function PipelineContent() {
           duration: 3000,
           isClosable: true,
         });
+
+        // toast({
+        //   title: 'Pipeline Save Successful',
+        //   description: 'The pipeline has been updated in the database.',
+        //   status: 'success',
+        //   duration: 3000,
+        //   isClosable: true,
+        // });
+        
+
         } catch (error) {
           console.error('파이프라인 저장 오류:', error);
           toast({
@@ -568,6 +784,14 @@ function PipelineContent() {
       duration: 3000,
       isClosable: true,
     })
+    // toast({
+    //   title: 'Node Deletion',
+    //   description: 'The node has been successfully deleted.',
+    //   status: 'success',
+    //   duration: 3000,
+    //   isClosable: true,
+    // })
+
   }, [runningNodeIds, setNodes, setEdges, setLogs, toast])
 
   // 노드 실행 순서 결정 함수
@@ -793,7 +1017,7 @@ function PipelineContent() {
                     console.log('Pipeline execution completed')
                     setPipelineStatus('completed')
                     
-                    // 로그에 기록
+                    // // 로그에 기록
                     setLogs(prev => [...prev, {
                       timestamp: new Date().toISOString(),
                       level: 'info',
@@ -808,6 +1032,23 @@ function PipelineContent() {
                       duration: 3000,
                       isClosable: true,
                     })
+          
+
+                    // // Record in the log
+                    // setLogs(prev => [...prev, {
+                    //   timestamp: new Date().toISOString(),
+                    //   level: 'info',
+                    //   message: 'Pipeline execution is complete.'
+                    // }]);
+
+                    // // Show toast message only when the entire pipeline is completed
+                    // toast({
+                    //   title: 'Pipeline Execution Complete',
+                    //   description: 'All nodes have been successfully executed.',
+                    //   status: 'success',
+                    //   duration: 3000,
+                    //   isClosable: true,
+                    // })
                   }
                   
                   return {
@@ -1252,7 +1493,7 @@ function PipelineContent() {
         switch (type) {
           case 'data_collection':
             return {
-              label: '데이터 수집',
+              label: 'Data collection', //데이터 수집
               type: 'data_collection',
               status: 'idle',
               progress: 0,
@@ -1268,7 +1509,7 @@ function PipelineContent() {
             }
           case 'data_validation':
             return {
-              label: '데이터 검증',
+              label: 'Data validation', //데이터 검증
               type: 'data_validation',
               status: 'idle',
               progress: 0,
@@ -1283,7 +1524,7 @@ function PipelineContent() {
             }
           case 'feature_engineering':
             return {
-              label: '특성 엔지니어링',
+              label: 'Feature engineering', //특성 엔지니어링
               type: 'feature_engineering',
               status: 'idle',
               progress: 0,
@@ -1298,7 +1539,7 @@ function PipelineContent() {
             }
           case 'data_split':
             return {
-              label: '데이터 분할',
+              label: 'Data split', //데이터 분할
               type: 'data_split',
               status: 'idle',
               progress: 0,
@@ -1311,7 +1552,7 @@ function PipelineContent() {
             }
           case 'model_training':
             return {
-              label: '모델 학습',
+              label: 'Model training', //모델 학습
               type: 'model_training',
               status: 'idle',
               progress: 0,
@@ -1330,7 +1571,7 @@ function PipelineContent() {
             }
           case 'model_evaluation':
             return {
-              label: '모델 평가',
+              label: 'Model evaluation', //모델 평가
               type: 'model_evaluation',
               status: 'idle',
               progress: 0,
@@ -1346,7 +1587,7 @@ function PipelineContent() {
             }
           case 'model_analysis':
             return {
-              label: '모델 분석',
+              label: 'Model analysis', //모델 분석석
               type: 'model_analysis',
               status: 'idle',
               progress: 0,
@@ -1361,7 +1602,7 @@ function PipelineContent() {
             }
           case 'model_versioning':
             return {
-              label: '모델 버전 관리',
+              label: 'Model versioning', //모델 버전 관리
               type: 'model_versioning',
               status: 'idle',
               progress: 0,
@@ -1372,7 +1613,7 @@ function PipelineContent() {
             }
           case 'model_deployment':
             return {
-              label: '모델 배포',
+              label: 'Model deployment', //모델 배포
               type: 'model_deployment',
               status: 'idle',
               progress: 0,
@@ -1388,7 +1629,7 @@ function PipelineContent() {
             }
           case 'monitoring':
             return {
-              label: '모니터링',
+              label: 'Monitoring', //모니터링
               type: 'monitoring',
               status: 'idle',
               progress: 0,
@@ -1429,6 +1670,15 @@ function PipelineContent() {
         duration: 2000,
         isClosable: true,
       })
+      // toast({
+      //   title: 'Node Added',
+      //   description: `${newNode.data.label} node has been added.`,
+      //   status: 'success',
+      //   duration: 2000,
+      //   isClosable: true,
+      // })
+
+
     },
     [reactFlowInstance, nodes, setNodes, toast]
   )
@@ -1596,13 +1846,22 @@ function PipelineContent() {
     })
 
     // 토스트 알림
+    // toast({
+    //   title: '노드 연결됨',
+    //   description: `${sourceNode.data.label} → ${targetNode.data.label}`,
+    //   status: 'info',
+    //   duration: 2000,
+    //   isClosable: true,
+    // })
     toast({
-      title: '노드 연결됨',
+      title: 'Node Connected',
       description: `${sourceNode.data.label} → ${targetNode.data.label}`,
       status: 'info',
       duration: 2000,
       isClosable: true,
-    })
+    });
+
+
   }, [nodes, setEdges, toast])
 
   // 엣지 삭제 핸들러
@@ -1660,6 +1919,16 @@ function PipelineContent() {
         duration: 3000,
         isClosable: true,
       });
+
+      // toast({
+      //   title: 'Pipeline Export Successful',
+      //   description: 'The pipeline has been saved as a JSON file.',
+      //   status: 'success',
+      //   duration: 3000,
+      //   isClosable: true,
+      // });
+
+
     } catch (error) {
       console.error('파이프라인 내보내기 실패:', error);
       toast({
@@ -1669,6 +1938,7 @@ function PipelineContent() {
         duration: 3000,
         isClosable: true,
       });
+      
     }
   }, [nodes, edges, version, toast]);
 
@@ -1712,6 +1982,16 @@ function PipelineContent() {
               duration: 3000,
               isClosable: true,
             });
+
+            // toast({
+            //   title: 'Pipeline Retrieval Successful',
+            //   description: 'The pipeline has been successfully restored.',
+            //   status: 'success',
+            //   duration: 3000,
+            //   isClosable: true,
+            // });
+
+
           } catch (error) {
             console.error('파이프라인 파일 파싱 실패:', error);
             toast({
@@ -1817,6 +2097,14 @@ function PipelineContent() {
           duration: 3000,
           isClosable: true,
         });
+        // toast({
+        //   title: 'Pipeline Deletion Completed',
+        //   description: 'The pipeline has been successfully deleted.',
+        //   status: 'info',
+        //   duration: 3000,
+        //   isClosable: true,
+        // });
+        
 
         // 로그에 삭제 기록
         setLogs(prev => [...prev, {
@@ -1909,6 +2197,15 @@ function PipelineContent() {
                     duration: 3000,
                     isClosable: true,
                   })
+                  // toast({
+                  //   title: 'Pipeline Saved',
+                  //   description: `Saved as version ${version}.`,
+                  //   status: 'success',
+                  //   duration: 3000,
+                  //   isClosable: true,
+                  // });
+                  
+
                 } catch (error) {
                   console.error('파이프라인 저장 중 오류:', error)
                   
@@ -1920,7 +2217,7 @@ function PipelineContent() {
                     isClosable: true,
                   })
                 }
-                // 3️⃣ Cập nhật dữ liệu lên server
+
               try {
                   handleSavePipeline();
                 } catch (error) {
