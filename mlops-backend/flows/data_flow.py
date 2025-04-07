@@ -335,9 +335,30 @@ def data_flow(cfg: Dict[str, Any]):
             target_col=ds_cfg['target_col']
         )
         
+        # ✅ Calculate time range & sample rate
+        if ds_cfg['date_col'] in data_raw.columns:
+            timestamps = pd.to_datetime(data_raw[ds_cfg['date_col']].dropna())
+            if not timestamps.empty:
+                time_min = timestamps.min()
+                time_max = timestamps.max()
+                time_range = f"{time_min.strftime('%Y-%m-%d %H:%M:%S')} ~ {time_max.strftime('%Y-%m-%d %H:%M:%S')}"
+                # Calculate median sampling interval
+                deltas = timestamps.sort_values().diff().dropna()
+                median_delta = deltas.median()
+                sample_rate = str(median_delta)
+            else:
+                time_range = "Unknown"
+                sample_rate = "Unknown"
+        else:
+            time_range = "Unknown"
+            sample_rate = "Unknown"
+        
 
         # **2️⃣ Generate metadata for the new version**
         metadata = generate_metadata_timeseries(data_raw, ds_id, ds_name, ds_author, data_type, ds_cfg, file_path)
+        metadata["timeRange"] = time_range
+        metadata["sampleRate"] = sample_rate
+        metadata["sensor"] = 0
 
         # ✅ Load the existing global metadata file (or initialize if missing)
         main_metadata_file = os.path.join(dvc_ds_root, f"metadata_{ds_name}.json")

@@ -16,7 +16,7 @@ dataset:
     # date_col: TransactionDate  # Column containing date information
     # target_col: Stock  # Target column
     # time_step: 30  # Specify the number of time steps
-    date_col: INPUT_DATE  # Column containing date information
+    date_col: Date  # Column containing date information
     target_col: ITEM001  # Target column
     time_step: 672  
     ds_author: 박진제

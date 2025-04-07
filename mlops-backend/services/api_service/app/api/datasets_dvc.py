@@ -137,7 +137,7 @@ async def get_dataset_detail_info(dataset_id: str):
             }
             for feat in metadata.get("features", [])
         ],
-        "data": metadata.get("data", [])[:20],  # Lấy 20 dòng dữ liệu đầu tiên
+        "data": metadata.get("data", [])[-50:], # Lấy 50 dòng dữ liệu cuoi cung
         "columns": metadata.get("columns_list", []),
         "versions": metadata.get("versions", []),
     }
