@@ -146,17 +146,17 @@ export function ExperimentDetails({ experiment }: ExperimentDetailsProps) {
                             <LineChart
                               data={[
                                 {
-                                  id: '학습',
+                                  name: '학습',
                                   data: experiment.metrics.trainAcc.map((value: number, index: number) => ({
                                     x: index + 1,
-                                    y: value * 100
+                                    y: value
                                   }))
                                 },
                                 {
-                                  id: '검증',
+                                  name: '검증',
                                   data: experiment.metrics.valAcc.map((value: number, index: number) => ({
                                     x: index + 1,
-                                    y: value * 100
+                                    y: value
                                   }))
                                 }
                               ]}
@@ -177,14 +177,14 @@ export function ExperimentDetails({ experiment }: ExperimentDetailsProps) {
                             <LineChart
                               data={[
                                 {
-                                  id: '학습',
+                                  name: '학습',
                                   data: experiment.metrics.trainLoss.map((value: number, index: number) => ({
                                     x: index + 1,
                                     y: value
                                   }))
                                 },
                                 {
-                                  id: '검증',
+                                  name: '검증',
                                   data: experiment.metrics.valLoss.map((value: number, index: number) => ({
                                     x: index + 1,
                                     y: value

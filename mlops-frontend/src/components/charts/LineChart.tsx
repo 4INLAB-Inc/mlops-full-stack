@@ -15,9 +15,11 @@ interface LineChartProps {
     data: number[]
   }>
   categories: string[]
+  xLabel?: string
+  yLabel?: string
 }
 
-export default function LineChart({ data, categories }: LineChartProps) {
+export default function LineChart({ data, categories, xLabel, yLabel }: LineChartProps) {
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
 
@@ -53,6 +55,7 @@ export default function LineChart({ data, categories }: LineChartProps) {
     markers: {
       size: 5,
       strokeWidth: 2,
+      strokeColors: 'transparent',
       hover: {
         size: 7
       }
@@ -79,6 +82,14 @@ export default function LineChart({ data, categories }: LineChartProps) {
     },
     xaxis: {
       categories: categories,
+      tickAmount: 20, // giới hạn số nhãn trục X
+      title: {
+        text: xLabel || '',
+        style: {
+          color: isDark ? '#CBD5E0' : '#4A5568',
+          fontSize: '14px',
+        }
+      },
       labels: {
         style: {
           colors: isDark ? '#CBD5E0' : '#4A5568',
@@ -94,25 +105,35 @@ export default function LineChart({ data, categories }: LineChartProps) {
     },
     yaxis: [
       {
+        title: {
+          text: yLabel || '',
+          style: {
+            color: isDark ? '#CBD5E0' : '#4A5568',
+            fontSize: '14px',
+          },
+        },
         labels: {
           style: {
             colors: isDark ? '#CBD5E0' : '#4A5568',
             fontSize: '12px'
           },
-          formatter: (value: number) => `${value}%`
+          formatter: (value: number) => {
+            return yLabel.includes('%') ? `${value}%` : value;
+          }
         }
       },
-      {
-        opposite: true,
-        labels: {
-          style: {
-            colors: isDark ? '#CBD5E0' : '#4A5568',
-            fontSize: '12px'
-          },
-          formatter: (value: number) => `${value}`
-        }
-      }
+      // {
+      //   opposite: true,
+      //   labels: {
+      //     style: {
+      //       colors: isDark ? '#CBD5E0' : '#4A5568',
+      //       fontSize: '12px'
+      //     },
+      //     formatter: (value: number) => `${value}`
+      //   }
+      // }
     ],
+    
     tooltip: {
       enabled: true,
       theme: isDark ? 'dark' : 'light',
@@ -120,7 +141,11 @@ export default function LineChart({ data, categories }: LineChartProps) {
         fontSize: '12px'
       },
       y: {
-        formatter: (value: number) => `${value}%`
+        formatter: (value: number) => {
+          const isPercent = yLabel?.includes('%');
+          const rounded = isPercent ? value.toFixed(2) : value.toFixed(5);
+          return isPercent ? `${rounded}%` : rounded;
+        }
       },
       marker: {
         show: true
