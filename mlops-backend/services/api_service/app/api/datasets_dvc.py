@@ -7,7 +7,7 @@ import logging
 import subprocess
 from api.workflow_run import check_if_flow_running, run_selected_flow  # Kiểm tra trạng thái task đang chạy
 from utils.class_base import Dataset
-
+from shlex import quote
 # Tạo router cho API datasets
 router = APIRouter()
 
@@ -312,7 +312,7 @@ async def dataset_create_and_run(
     description=None
     data_type=None
     model_name=None
-    ds_description=ds_description
+    ds_description=quote(ds_description)
     dvc_tag=dvc_tag_list
     file_path=file_path
     model=None

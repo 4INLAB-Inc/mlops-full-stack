@@ -10,6 +10,15 @@ from io import BytesIO
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, InputLayer
 from tensorflow.keras.models import load_model, Model
 
+import tensorflow.keras.backend as K
+from tensorflow.keras.metrics import MeanAbsoluteError, MeanAbsolutePercentageError
+
+def smape_keras(y_true, y_pred):
+    epsilon = K.epsilon()
+    denominator = K.abs(y_true) + K.abs(y_pred) + epsilon
+    diff = K.abs(y_pred - y_true) / denominator
+    return 200.0 * K.mean(diff)
+
 CENTRAL_STORAGE_PATH = os.getenv('CENTRAL_STORAGE_PATH', '/service/central_storage')
 
 logger = logging.getLogger('main')
@@ -49,6 +58,7 @@ def retrieve_metadata_file(model_metadata_file_path: str, run_name: str):
     return metadata
 
 def tf_load_model(model_metadata_file_path: str, run_name: str):
+    logger.info(f"[tf_load_model] run_name: {run_name}, metadata file: {model_metadata_file_path}")
     metadata = retrieve_metadata_file(model_metadata_file_path, run_name)
     
     # Lấy đường dẫn đến mô hình từ metadata
@@ -63,7 +73,12 @@ def tf_load_model(model_metadata_file_path: str, run_name: str):
         raise FileNotFoundError(f"Model directory not found: {model_dir}")
 
     logger.info(f'Loading the model from {model_dir}')
-    model = load_model(model_dir)
+    custom_objects = {
+                        "smape_keras": smape_keras,
+                        "MeanAbsoluteError": MeanAbsoluteError,
+                        "MeanAbsolutePercentageError": MeanAbsolutePercentageError
+                    }
+    model = load_model(model_dir, custom_objects=custom_objects)
     logger.info('Model loaded successfully')
     return model, metadata
 

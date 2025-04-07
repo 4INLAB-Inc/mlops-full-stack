@@ -12,8 +12,8 @@ from tasks.dataset import (
     prepare_time_series_data,
     split_time_series_data
 )
-from flows.utils import log_mlflow_info, build_and_log_mlflow_url
-from prefect import flow, get_run_logger
+from flows.utils import log_mlflow_info, build_and_log_mlflow_url, create_logs_file
+from prefect import flow, get_run_logger, context
 from prefect.artifacts import create_link_artifact
 from typing import Dict, Any
 from mlflow.tracking import MlflowClient
@@ -145,7 +145,16 @@ MODEL_STORAGE_PATH = os.getenv("MODEL_STORAGE_PATH", "/home/ariya/central_storag
 @flow(name="evaluation_flow")
 def eval_flow(cfg: Dict[str, Any], data_type: str, dataset_name:str, model_name:str, model_type:str, model_version: int):
     client = MlflowClient()
+    
+    flow_run_id = context.get_run_context().flow_run.id
+    log_file_path = create_logs_file(flow_run_id,flow_type="eval_flow")
+    
     logger = get_run_logger()
+    logger.info("Starting evaluation flow....")
+    logger.info(f"Log file saved to: {log_file_path}")
+    
+    logger = get_run_logger()
+    
     registered_models = client.search_registered_models()
     model_found = any(model.name == model_type for model in registered_models)
     # model_version=int(model_version)
@@ -237,11 +246,11 @@ def eval_flow(cfg: Dict[str, Any], data_type: str, dataset_name:str, model_name:
         logger.warning("An active MLflow run detected. Ending the current run.")
         mlflow.end_run()
 
-    with mlflow.start_run(run_name=mlflow_exp_name, description="Evaluation for latest model version") as eval_run:
+    with mlflow.start_run(run_name=run_name, description="Evaluation for latest model version") as eval_run:
         log_mlflow_info(logger, eval_run)
 
         if data_type == "timeseries":
-            mse, mae, mape = evaluate_timeseries_model(
+            mse, mae, smape_eval = evaluate_timeseries_model(
                 model=trained_model, 
                 X_test=X_test, 
                 y_test=y_test, 
@@ -252,17 +261,18 @@ def eval_flow(cfg: Dict[str, Any], data_type: str, dataset_name:str, model_name:
             # Log evaluation metrics to MLflow
             mlflow.log_metric("mse", mse)
             mlflow.log_metric("mae", mae)
-            mlflow.log_metric("mape", mape)
+            mlflow.log_metric("mape", smape_eval)
 
         eval_run_url = build_and_log_mlflow_url(logger, eval_run)
 
         # Gắn metadata lên MLflow
         mlflow.set_tags({
             "model_type": model_type,
+            "log_file": log_file_path,
             "train_run_name": run_name,
             "framework": "TensorFlow",
             "status": "deployed",
-            "accuracy": round(100 * (1 - mape), 1),
+            "accuracy": round(100 - smape_eval, 1),
             "dataset": dataset_name,
             "final_loss": mse,
             "createdAt": datetime.now().strftime("%Y-%m-%d"),
@@ -282,13 +292,15 @@ def eval_flow(cfg: Dict[str, Any], data_type: str, dataset_name:str, model_name:
 
 
 def start(cfg):
-    eval_cfg = cfg['evaluate']
+    model_cfg = cfg['model']
+    data_type=cfg['data_type']
     eval_flow(
         cfg=cfg,
-        data_type=cfg['data_type'],
+        data_type=data_type,
         dataset_name=cfg['dataset']['ds_name'],
-        model_name=eval_cfg['model_name'],
-        model_type=eval_cfg['timeseries']['model_type'],
+        model_name=model_cfg[data_type]['model_name'],
+        model_type=model_cfg[data_type]['model_type'],
+        model_version=model_cfg[data_type]['model_version'],
     )
 
     

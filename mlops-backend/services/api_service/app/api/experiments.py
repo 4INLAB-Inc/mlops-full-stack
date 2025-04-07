@@ -1,6 +1,6 @@
 from fastapi import BackgroundTasks, Form, HTTPException
 from utils.mlflow_utils import (
-    get_runs_for_experiment, get_latest_run_for_experiment, get_all_experiments, get_mlflow_and_datasets_info
+    get_runs_for_experiment, get_latest_run_for_experiment, get_all_experiments, get_mlflow_and_datasets_info, get_latest_run_logs
 )
 from api.workflow_run import run_selected_flow
 from utils.class_base import (
@@ -22,6 +22,17 @@ async def get_lastest_experiment_info(experiment_id: str) -> Experiment_Lastest:
     if not run_lastest:
         raise HTTPException(status_code=404, detail="Experiment not found")
     return Experiment_Lastest(**run_lastest)  # Return as Experiment_Lastest object
+
+# Fetch the latest logs of the experiment using the experiment ID
+async def get_lastest_experiment_log(experiment_id: str):
+    # Fetch the latest run logs for the experiment
+    latest_run_logs = get_latest_run_logs(experiment_id)
+    
+    # Check if logs were found
+    if not latest_run_logs:
+        raise HTTPException(status_code=404, detail="Logs not found for the latest run")
+    
+    return latest_run_logs  # Return the logs as a list of dictionaries
 
 # Fetch information for a specific experiment and run by their IDs
 async def get_experiment_and_run_info(experiment_id: str, run_id: str) -> List[Run]:

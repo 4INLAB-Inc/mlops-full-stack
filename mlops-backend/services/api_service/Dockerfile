@@ -33,7 +33,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
         sudo \
         npm \
         libgl1 \ 
-        docker.io \
+        docker.io \ 
         # for run cmd
         tini \ 
         # for DeepChecks
@@ -100,4 +100,64 @@ WORKDIR /service/app
 
 ENV GIT_DISCOVERY_ACROSS_FILESYSTEM=1
 
-CMD umask 000 && chmod -R 777 /home/ariya/central_storage/datasets && chown -R 1000:1000 /home/ariya/central_storage/datasets && gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${API_SERVICE_PORT} --timeout 120
+CMD umask 000 && chmod -R 777 /home/ariya/central_storage/datasets && chown -R 1000:1000 /home/ariya/central_storage/datasets && gunicorn main:app --workers 8 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${API_SERVICE_PORT} --timeout 120 --max-requests 1000
+
+
+# FROM python:3.9.17-slim
+
+# USER root
+
+# ARG API_SERVICE_PORT=$API_SERVICE_PORT
+# ARG DVC_DATA_STORAGE=$DVC_DATA_STORAGE
+
+# # for using curl in health check
+# RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+#         curl \
+#         tzdata \
+#         docker.io \
+#         # for hdf5
+#         # look like a new version of hdf5 require 'libhdf5-dev' package
+#         pkg-config \
+#         build-essential \
+#         libhdf5-dev \
+#         && \
+#     apt-get clean && \
+#     rm -rf /var/lib/apt/lists/*
+
+# WORKDIR /service
+
+# COPY requirements.txt .
+
+# RUN pip install -r requirements.txt
+
+# RUN mkdir -p /home/ariya/central_storage/datasets && chmod -R 777 /home/ariya/central_storage/datasets
+# RUN mkdir -p /service/central_storage && chmod -R 777 /service/central_storage
+# RUN chown -R 1000:1000 /home/ariya/central_storage/datasets
+
+
+# # # Install conda
+# # RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-py38_23.3.1-0-Linux-${ARCH}.sh && \
+# #     bash Miniconda3-py38_23.3.1-0-Linux-${ARCH}.sh -f -b -p $CONDA_DIR
+
+
+# # # Put conda in path 
+# # # PIP_DEFAULT_TIMEOUT=100 to solve ReadTimeoutError when pip install large packages
+# # ENV PATH=$CONDA_DIR/bin:$PATH \
+# #     PIP_DEFAULT_TIMEOUT=100 
+
+# # NVIDIA Container Runtime
+# ENV NVIDIA_VISIBLE_DEVICES=all
+# ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+# ENV LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH
+# ENV PATH=/usr/local/cuda-11.8/bin:$PATH
+# ENV PYTHONPATH=/flows:$PYTHONPATH
+
+# COPY app/ app/
+
+# EXPOSE $API_SERVICE_PORT
+
+# WORKDIR /service/app
+
+# ENV GIT_DISCOVERY_ACROSS_FILESYSTEM=1
+
+# CMD umask 000 && chmod -R 777 /home/ariya/central_storage/datasets && chown -R 1000:1000 /home/ariya/central_storage/datasets && gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${API_SERVICE_PORT} --timeout 120

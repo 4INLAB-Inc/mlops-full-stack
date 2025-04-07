@@ -1,5 +1,6 @@
 import os
-from prefect import flow, get_run_logger
+from flows.utils import create_logs_file
+from prefect import flow, get_run_logger, context
 from tasks.deploy import (
     put_model_to_service,
     validate_model_metadata,
@@ -20,7 +21,13 @@ def deploy_flow(model_name: str, model_type: str, model_version: int, data_type:
     Deployment flow for the model.
     Includes validation, backup, deployment, rollback, and logging.
     """
+    flow_run_id = context.get_run_context().flow_run.id
+    log_file_path = create_logs_file(flow_run_id,flow_type="deploy_flow")
+    
     logger = get_run_logger()
+    logger.info("Starting deploy flow...")
+    logger.info(f"Log file saved to: {log_file_path}")
+    
     client = MlflowClient()
     logger = get_run_logger()
     registered_models = client.search_registered_models()
@@ -56,7 +63,7 @@ def deploy_flow(model_name: str, model_type: str, model_version: int, data_type:
     if not os.path.exists(model_source):
         raise FileNotFoundError(f"🚨 Model not found at {model_source}")
 
-    print(f"✅ Latest model source path: {model_source}")
+    logger.info(f"✅ Selected model source of version {model_version} path: {model_source}")
 
 
     # Load model metadata from artifacts
@@ -90,5 +97,6 @@ def deploy_flow(model_name: str, model_type: str, model_version: int, data_type:
 
 
 def start(cfg):
-    deploy_cfg = cfg['deploy']
-    deploy_flow(deploy_cfg['model_name'], deploy_cfg['model_type'])
+    model_cfg = cfg['model']
+    data_type=cfg['data_type']
+    deploy_flow(model_cfg['model_name'], model_cfg['model_type'], model_cfg['model_version'], data_type)

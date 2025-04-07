@@ -25,7 +25,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
         nano \
         sudo \
         npm \
-        libgl1 \ 
+        libgl1 \
+        # for run docker cmd 
+        docker.io \ 
         # for run cmd
         tini \ 
         # for DeepChecks

@@ -5,7 +5,8 @@ import pickle
 import numpy as np
 import pandas as pd
 from typing import Dict, Any
-from prefect import flow, get_run_logger
+from flows.utils import create_logs_file
+from prefect import flow, get_run_logger, context
 from datetime import datetime
 from subprocess import run, CalledProcessError
 
@@ -178,8 +179,11 @@ def get_dataset_index(ds_name: str, dvc_root: str) -> int:
 # ✅ Main data processing flow
 @flow(name='data_flow')
 def data_flow(cfg: Dict[str, Any]):
+    flow_run_id = context.get_run_context().flow_run.id
+    log_file_path = create_logs_file(flow_run_id,flow_type="data_flow")
     logger = get_run_logger()
-    logger.info("Starting data preprocessing...")
+    logger.info("Starting data processing flow...")
+    logger.info(f"Log file saved to: {log_file_path}")
 
     data_type = cfg['data_type']
     ds_cfg = cfg['dataset']

@@ -133,6 +133,7 @@ async def run_flow_cmd(flow_name: str, config_file: str, name: str = None, descr
        # Use shlex.quote to ensure that the string is enclosed in quotes when there are spaces
         name = shlex.quote(name) if name else None
         description = shlex.quote(description) if description else None
+        # ds_description = shlex.quote(ds_description) if ds_description else None
         dataset = shlex.quote(dataset) if dataset else None
         model = shlex.quote(model) if model else None
 

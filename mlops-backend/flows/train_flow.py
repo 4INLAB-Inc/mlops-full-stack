@@ -6,8 +6,8 @@ import pickle
 import numpy as np
 from datetime import datetime
 from tasks.utils.tf_data_utils import AUGMENTER
-from flows.utils import log_mlflow_info, build_and_log_mlflow_url
-from prefect import flow, get_run_logger
+from flows.utils import log_mlflow_info, build_and_log_mlflow_url, create_logs_file
+from prefect import flow, get_run_logger, context
 from prefect.artifacts import create_link_artifact
 import docker
 
@@ -138,8 +138,17 @@ print(metrics)
 
 @flow(name='train_flow')
 def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
+    flow_run_id = context.get_run_context().flow_run.id
+    log_file_path = create_logs_file(flow_run_id,flow_type="train_flow")
+    
+    
+    
+    
+    
     logger = get_run_logger()
-    # main save directories
+    logger.info("Starting training flow...")
+    logger.info(f"Log file saved to: {log_file_path}")
+    
     central_models_dir = os.path.join(CENTRAL_STORAGE_PATH, 'models')
     central_ref_data_dir = os.path.join(CENTRAL_STORAGE_PATH, 'ref_data')
     
@@ -153,10 +162,9 @@ def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
     
     print(f"Lastest version of {ds_name} is {latest_version_folder}!")
 
-    
+
+        
     # Config variables
-    
-    
     ds_cfg = cfg['dataset']
     data_type = cfg['data_type'] 
     mlflow_train_cfg = cfg['train'][data_type]['mlflow']
@@ -187,9 +195,9 @@ def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
                             classifier_activation=model_cfg['classifier_activation'],
                             classification_layer=model_cfg['classification_layer'])
         ds_repo_path, annotation_df = prepare_dataset(ds_root=ds_cfg['ds_root'], 
-                                                      ds_name=ds_cfg['ds_name'], 
-                                                      dvc_tag=ds_cfg['dvc_tag'], 
-                                                      dvc_checkout=ds_cfg['dvc_checkout'])
+                                                    ds_name=ds_cfg['ds_name'], 
+                                                    dvc_tag=ds_cfg['dvc_tag'], 
+                                                    dvc_checkout=ds_cfg['dvc_checkout'])
         report_path = f"files/{ds_cfg['ds_name']}_{ds_cfg['dvc_tag']}_validation.html"
         validate_data(ds_repo_path, img_ext='jpeg', save_path=report_path)
     elif data_type == 'timeseries':
@@ -227,8 +235,8 @@ def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
             best_params = optimize(input_shape, X_train, X_val, y_train, y_val)  # Full Optuna optimization
             model_type = best_params["model_type"]  # Extract optimized model type
         else:
-            best_params = optimize(input_shape, X_train, X_val, y_train, y_val, model_type)  # Optimize only hyperparameters
-
+            # best_params = optimize(input_shape, X_train, X_val, y_train, y_val, model_type)  # Optimize only hyperparameters fpr selected model
+            best_params=hparams  #Training with input parameter, not need optimizing
 
         
         # 🔹 Build model with optimized parameters
@@ -238,7 +246,8 @@ def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
             lstm_units=best_params["lstm_units"],
             conv_filters=best_params["conv_filters"],
             kernel_size=best_params["kernel_size"],
-            dropout_rate=best_params["dropout_rate"]
+            dropout_rate=best_params["dropout_rate"],
+            learningRate=best_params["learningRate"]
         )
             
     else:
@@ -255,34 +264,34 @@ def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
     else:
             model_cfg['save_dir'] = os.path.join(CENTRAL_STORAGE_PATH, 'models')
             os.makedirs(model_cfg['save_dir'], exist_ok=True)  # Ensure directory exists
-
-    # Start MLflow run
+                
+        # Start MLflow run
     mlflow.set_experiment(mlflow_train_cfg['exp_name'])
     with mlflow.start_run(run_name=run_name, description=mlflow_train_cfg['exp_desc']) as train_run:
         log_mlflow_info(logger, train_run)
         mlflow_run_url = build_and_log_mlflow_url(logger, train_run)
+
+    
         
         mlflow.log_params(best_params)
         mlflow.log_params({"epochs": hparams['epochs']})
         
-        #  # Log dataset information
-        # mlflow.log_param("dataset_name", ds_cfg['ds_name'])
-        # mlflow.log_param("dataset_version", ds_cfg.get('dvc_tag', 'v1.0.0'))
-        # mlflow.log_param("dataset_path", ds_cfg['file_path'])
-        # mlflow.log_param("date_column", ds_cfg.get('date_col', 'N/A'))
-        # mlflow.log_param("target_column", ds_cfg.get('target_col', 'N/A'))
-        # mlflow.log_param("time_steps", ds_cfg.get('time_step', 'N/A'))
+        # Gắn thẻ metadata vào MLflow
+        tags_exp_initial = {
+            "model_type": model_type,
+            "log_file": log_file_path,
+            "framework": "TensorFlow",
+            "status": "training",
+            "dataset": ds_cfg.get('ds_name', "Stock_product_01"),
+            "data_type": data_type,
+            "epochs": str(hparams.get("epochs", 10)),
+            "learning_rate": str(best_params.get("learningRate", 0.001)),
+            "createdAt": datetime.now().strftime('%Y-%m-%d'),
+            "updatedAt": datetime.now().strftime('%Y-%m-%d'),
+        }
+        for k, v in tags_exp_initial.items():
+            mlflow.set_tag(k, v)
 
-        # if data_type == 'timeseries':
-        #     # Log number of data and data split ratio
-        #     mlflow.log_param("total_data_points", total_data)
-        #     mlflow.log_param("train_data_points", train_data)
-        #     mlflow.log_param("val_data_points", val_data)
-        #     # mlflow.log_param("test_data_points", test_data)
-
-        #     mlflow.log_metric("train_ratio", train_ratio)
-        #     mlflow.log_metric("val_ratio", val_ratio)
-        #     # mlflow.log_metric("test_ratio", test_ratio)
         
         # Log dataset information as an artifact
         dataset_info = {
@@ -320,7 +329,7 @@ def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
             )
         elif data_type == 'timeseries':
             # Train model
-            trained_model, final_train_loss, mape, training_time = train_timeseries_model(
+            trained_model, final_train_loss, smape, training_time = train_timeseries_model(
                 model=optimized_model,
                 X_train=X_train,
                 y_train=y_train,
@@ -336,26 +345,33 @@ def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
         else:
             raise ValueError(f"Unsupported data_type: {data_type}")
         
-        # Gắn thẻ metadata vào MLflow
-        tags_exp = {
+        
+        
+        tags_exp_update = {
             "model_type": model_type,
+            "log_file": log_file_path,
             "framework": "TensorFlow",
-            "status": "deployed",
-            "accuracy": round(100*(1-mape),1),
+            "status": "training",
             "dataset": ds_cfg.get('ds_name', "Stock_product_01"),
             "data_type": data_type,
-            "epochs": str(model_cfg.get("epochs", 10)),
-            "learning_rate": str(model_cfg.get("learning_rate", 0.001)),
-            "training_time": training_time,
-            "final_loss": final_train_loss,
+            "epochs": str(hparams.get("epochs", 10)),
+            "learning_rate": str(best_params.get("learningRate", 0.001)),
             "createdAt": datetime.now().strftime('%Y-%m-%d'),
             "updatedAt": datetime.now().strftime('%Y-%m-%d'),
+            "accuracy": round(100-smape,1),
+            "training_time": training_time,
+            "final_loss": final_train_loss,
+            "status": "deployed",
         }
+        for k, v in tags_exp_update.items():
+            mlflow.set_tag(k, v)    
+            
         
         docker_metrics = get_docker_container_metrics(container_name_or_id="jupyter")
         
         model_train_info = {
         "training_time": training_time,
+        "log_file": log_file_path,
         "dataset_name": ds_cfg.get('ds_name', "Stock_product_01"),
         "data_type": data_type,
         "dataset_size": f"{total_data} row",
@@ -374,7 +390,7 @@ def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
         "uptime": docker_metrics["uptime"]
         }
         
-        mlflow.set_tags(tags=tags_exp)
+        
         
         if data_type == 'image':
             model_dir, metadata_file_path = save_model(trained_model, model_cfg)
@@ -382,7 +398,7 @@ def train_flow(cfg: Dict[str, Any], data_type: str, ds_name: str):
                                                             metadata_file_path=metadata_file_path,
                                                             remote_dir=central_models_dir)
         elif data_type == 'timeseries':
-            model_dir, metadata_file_path, model_version = save_timeseries_model(trained_model, model_cfg, final_train_loss, mape, model_train_info)
+            model_dir, metadata_file_path, model_version = save_timeseries_model(trained_model, model_cfg, final_train_loss, smape, model_train_info)
             # model_save_dir, metadata_file_name = upload_timeseries_model(
             #     model_dir=model_dir,
             #     metadata_file_path=metadata_file_path,

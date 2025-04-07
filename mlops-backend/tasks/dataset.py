@@ -144,22 +144,20 @@ def prepare_time_series_data(data: pd.DataFrame, time_step: int, target_col: str
     logger = get_run_logger()
     logger.info(f"Preparing time series data with time_step={time_step} for column {target_col}...")
 
-    # ✅ Check if target column exists
     if target_col not in data.columns:
         raise ValueError(f"❌ Error: Target column '{target_col}' not found in DataFrame.")
 
-    # ✅ Handle missing values (NaN)
+    # ✅ Handle NaN values
     if data[target_col].isnull().any():
         nan_count = data[target_col].isnull().sum()
         logger.warning(f"⚠️ Warning: Column '{target_col}' contains {nan_count} missing values. Filling with mean.")
         data[target_col] = data[target_col].fillna(data[target_col].mean())
 
-        # Nếu toàn bộ cột là NaN, thay bằng 0
-        if data[target_col].isnull().all():
-            logger.error(f"❌ Error: Column '{target_col}' contains only NaN values! Replacing with 0.")
-            data[target_col] = data[target_col].fillna(0)
+    if data[target_col].isnull().all():
+        logger.error(f"❌ Error: Column '{target_col}' contains only NaN values! Replacing with 0.")
+        data[target_col] = data[target_col].fillna(0)
 
-    # ✅ Ensure target column is numeric
+    # ✅ Ensure numeric
     if not np.issubdtype(data[target_col].dtype, np.number):
         logger.error(f"❌ Error: Column '{target_col}' must be numeric. Converting to float.")
         try:
@@ -167,31 +165,35 @@ def prepare_time_series_data(data: pd.DataFrame, time_step: int, target_col: str
         except ValueError:
             raise ValueError(f"❌ Error: Column '{target_col}' cannot be converted to numeric.")
 
-    # ✅ Handle infinite values
+    # ✅ Replace Inf values
     data[target_col] = data[target_col].replace([np.inf, -np.inf], np.nan)
     if data[target_col].isnull().any():
         logger.warning(f"⚠️ Warning: Column '{target_col}' contained infinite values. Filling with mean.")
         data[target_col] = data[target_col].fillna(data[target_col].mean())
 
-    # ✅ Normalize target column
+    # ✅ Replace zeros with non-zero mean
+    non_zero_values = data[target_col][data[target_col] != 0]
+    if len(non_zero_values) > 0:
+        non_zero_mean = non_zero_values.mean()
+        zero_count = (data[target_col] == 0).sum()
+        logger.info(f"Replacing {zero_count} zero values with non-zero mean: {non_zero_mean:.4f}")
+        data[target_col] = data[target_col].replace(0, non_zero_mean)
+
+    # ✅ Normalize
     scaler = MinMaxScaler(feature_range=(0, 1))
     target_values = scaler.fit_transform(data[[target_col]])
 
-    # ✅ Create sequences
+    # ✅ Sequence creation
     X, y = [], []
     for i in range(len(target_values) - time_step):
         X.append(target_values[i:i + time_step, 0])
         y.append(target_values[i + time_step, 0])
 
-    # ✅ Convert to numpy arrays
     X, y = np.array(X), np.array(y)
-
-    # ✅ Ensure no NaN or Inf values remain
     X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
     y = np.nan_to_num(y, nan=0.0, posinf=0.0, neginf=0.0)
 
     logger.info(f"✅ Data preparation complete: X shape={X.shape}, y shape={y.shape}")
-
     return X, y, scaler
 
 

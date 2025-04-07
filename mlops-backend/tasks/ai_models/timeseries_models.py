@@ -8,7 +8,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error,mean_absolut
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import LSTM, GRU, Bidirectional, Dense, Dropout, Conv1D, MaxPooling1D
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, Callback
 from keras import backend as K
 import gc
 import subprocess
@@ -21,6 +21,16 @@ from datetime import datetime
 
 from typing import Dict, Union, List
 from mlflow.tracking import MlflowClient
+
+import tensorflow.keras.backend as K
+from tensorflow.keras.metrics import MeanAbsoluteError, MeanAbsolutePercentageError
+from tensorflow.keras.optimizers import Adam
+
+def smape_keras(y_true, y_pred):
+    epsilon = K.epsilon()
+    denominator = K.abs(y_true) + K.abs(y_pred) + epsilon
+    diff = K.abs(y_pred - y_true) / denominator
+    return 200.0 * K.mean(diff)
 
 
 def clear_gpu_memory():
@@ -44,6 +54,26 @@ def clear_gpu_memory():
         gc.collect()  # Forces Python garbage collection to free up memory
     except Exception as e:
         print(f"⚠ Error freeing system RAM: {e}")
+        
+        
+class EpochLogger(Callback):
+    def __init__(self, logger, total_epochs=1):
+        self.logger = logger
+        self.total_epochs = total_epochs
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        loss = logs.get("loss")
+        val_loss = logs.get("val_loss")
+        mae = logs.get("mae")
+        val_mae = logs.get("val_mae")
+        mape = logs.get("mape")
+        val_mape = logs.get("val_mape")
+        smape = logs.get("smape_keras") or logs.get("smape")
+        val_smape = logs.get("val_smape_keras") or logs.get("val_smape")
+        self.logger.info(
+            f"Epoch {epoch + 1}/{self.total_epochs}:: loss = {loss:.4f}, val_loss = {val_loss:.4f}, mae = {mae:.4f}, val_mae = {val_mae:.4f}, smape = {smape:.4f}, val_smape = {val_smape:.4f}"
+        )
 
     
 
@@ -53,7 +83,8 @@ def smape(A, F):
 # 1️⃣ MODEL BUILD FUNCTION
 # ==========================
 @task(name="build_timeseries_model")
-def build_timeseries_model(input_shape, model_type="LSTM", lstm_units=128, conv_filters=128, kernel_size=3, dropout_rate=0.2):
+def build_timeseries_model(input_shape, model_type="LSTM", lstm_units=128, 
+                           conv_filters=128, kernel_size=3, dropout_rate=0.2,learningRate=0.001):
     
     logger = get_run_logger()
     logger.info(f"Building {model_type} model with input shape {input_shape}...")
@@ -95,7 +126,13 @@ def build_timeseries_model(input_shape, model_type="LSTM", lstm_units=128, conv_
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
-    model.compile(optimizer="adam", loss="mse", metrics=["mae"])
+    model.compile(optimizer=Adam(learning_rate=learningRate),
+                loss="mse", 
+                metrics=[
+                MeanAbsoluteError(name="mae"),
+                MeanAbsolutePercentageError(name="mape"),
+                smape_keras
+                ])
     logger.info(f"{model_type} model built successfully.")
     return model
 
@@ -115,10 +152,11 @@ def objective(trial, input_shape, X_train, X_val, y_train, y_val, model_type=Non
     conv_filters = trial.suggest_int("conv_filters", 32, 256, step=32)
     kernel_size = trial.suggest_int("kernel_size", 3, 7, step=1)
     dropout_rate = trial.suggest_uniform("dropout_rate", 0.1, 0.5)
-    batch_size = trial.suggest_int('batch_size', 32, 128, step=32)
+    batch_size = trial.suggest_int('batch_size', 64, 256, step=32)
+    learningRate = trial.suggest_int('learningRate', 0.001, 0.01, step=0.001)
 
     # Build model with these hyperparameters
-    model = build_timeseries_model(input_shape, model_type, lstm_units, conv_filters, kernel_size, dropout_rate)
+    model = build_timeseries_model(input_shape, model_type, lstm_units, conv_filters, kernel_size, dropout_rate, learningRate)
 
     # Train model briefly for evaluation
     start_time = time.time()
@@ -142,7 +180,7 @@ def optimize(input_shape, X_train, X_val, y_train, y_val, model_type=None):
     """
     # If model_type is not provided, select it automatically
     if model_type is None or model_type == "AutoML":
-        n_trials=40
+        n_trials=50
     else:
         n_trials=5
     
@@ -171,13 +209,16 @@ def train_timeseries_model(model, X_train, y_train, X_val, y_val, X_test, y_test
     start_time = time.time()
     batch_size=best_params['batch_size']
     
+    epoch_logger = EpochLogger(logger, total_epochs=epochs)
+    
     history = model.fit(
         X_train, y_train,
         validation_data=(X_val, y_val),
         epochs=epochs,
         batch_size=batch_size,
         # callbacks=[early_stopping],
-        verbose=2
+        callbacks=[epoch_logger],
+        verbose=0
     )
     
     end_time = time.time()
@@ -194,7 +235,7 @@ def train_timeseries_model(model, X_train, y_train, X_val, y_val, X_test, y_test
     y_pred = scaler.inverse_transform(y_pred)
     y_test = scaler.inverse_transform(y_test.reshape(-1, 1))
     
-    mape_eval = smape(y_test, y_pred)
+    smape_test = smape(y_test, y_pred)
 
     # Log hyperparameters vào MLflow
     if mlflow.active_run() is None:
@@ -208,29 +249,49 @@ def train_timeseries_model(model, X_train, y_train, X_val, y_val, X_test, y_test
         mlflow.log_metric("train_loss", train_loss, step=epoch)
         mlflow.log_metric("val_loss", val_loss, step=epoch)
         
-        # Dự đoán trên tập training và validation
-        y_pred_epoch_1 = model.predict(X_train)
-        y_pred_epoch_2 = model.predict(X_val)
+        # # Dự đoán trên tập training và validation
+        # y_pred_epoch_1 = model.predict(X_train)
+        # y_pred_epoch_2 = model.predict(X_val)
 
-        # Đảo ngược scaler và kiểm tra NaN hoặc inf
-        y_pred_epoch_1_inverse = np.nan_to_num(scaler.inverse_transform(y_pred_epoch_1), nan=0.0, posinf=0.0, neginf=0.0)
-        y_pred_epoch_2_inverse = np.nan_to_num(scaler.inverse_transform(y_pred_epoch_2), nan=0.0, posinf=0.0, neginf=0.0)
-        y_train_inverse = np.nan_to_num(scaler.inverse_transform(y_train.reshape(-1, 1)), nan=0.0, posinf=0.0, neginf=0.0)
-        y_val_inverse = np.nan_to_num(scaler.inverse_transform(y_val.reshape(-1, 1)), nan=0.0, posinf=0.0, neginf=0.0)
+        # # Đảo ngược scaler và kiểm tra NaN hoặc inf
+        # y_pred_epoch_1_inverse = np.nan_to_num(scaler.inverse_transform(y_pred_epoch_1), nan=0.0, posinf=0.0, neginf=0.0)
+        # y_pred_epoch_2_inverse = np.nan_to_num(scaler.inverse_transform(y_pred_epoch_2), nan=0.0, posinf=0.0, neginf=0.0)
+        # y_train_inverse = np.nan_to_num(scaler.inverse_transform(y_train.reshape(-1, 1)), nan=0.0, posinf=0.0, neginf=0.0)
+        # y_val_inverse = np.nan_to_num(scaler.inverse_transform(y_val.reshape(-1, 1)), nan=0.0, posinf=0.0, neginf=0.0)
         
-        # Đảm bảo rằng kích thước dự đoán và thực tế khớp nhau
-        if y_train_inverse.shape != y_pred_epoch_1_inverse.shape:
-            raise ValueError("Shape mismatch between train predictions and true values.")
-        if y_val_inverse.shape != y_pred_epoch_2_inverse.shape:
-            raise ValueError("Shape mismatch between val predictions and true values.")
+        # # Đảm bảo rằng kích thước dự đoán và thực tế khớp nhau
+        # if y_train_inverse.shape != y_pred_epoch_1_inverse.shape:
+        #     raise ValueError("Shape mismatch between train predictions and true values.")
+        # if y_val_inverse.shape != y_pred_epoch_2_inverse.shape:
+        #     raise ValueError("Shape mismatch between val predictions and true values.")
         
-        # Tính MAPE
-        train_mape_epoch = smape(y_train_inverse, y_pred_epoch_1_inverse)
-        val_mape_epoch = smape(y_val_inverse, y_pred_epoch_2_inverse)
+        # # Tính MAPE
+        # train_mape_epoch = smape(y_train_inverse, y_pred_epoch_1_inverse)
+        # val_mape_epoch = smape(y_val_inverse, y_pred_epoch_2_inverse)
         
-        # Log MAPE
-        mlflow.log_metric("train_acc", 100-train_mape_epoch, step=epoch)
-        mlflow.log_metric("val_acc", 100-val_mape_epoch, step=epoch)
+        # # Log MAPE
+        # mlflow.log_metric("train_acc", 100-train_mape_epoch, step=epoch)
+        # mlflow.log_metric("val_acc", 100-val_mape_epoch, step=epoch)
+         # MAE + MAPE
+        if "mae" in history.history:
+            mlflow.log_metric("train_mae", history.history["mae"][epoch], step=epoch)
+            mlflow.log_metric("val_mae", history.history["val_mae"][epoch], step=epoch)
+        if "mape" in history.history:
+            mlflow.log_metric("train_mape", history.history["mape"][epoch], step=epoch)
+            mlflow.log_metric("val_mape", history.history["val_mape"][epoch], step=epoch)
+
+        # SMAPE → Accuracy
+        if "smape_keras" in history.history:
+            smape_train = history.history["smape_keras"][epoch]
+            smape_val = history.history["val_smape_keras"][epoch]
+            
+            # Log raw smape
+            mlflow.log_metric("train_smape", smape_train, step=epoch)
+            mlflow.log_metric("val_smape", smape_val, step=epoch)
+
+            # ✅ Tính accuracy từ smape (có thể âm nếu smape > 100)
+            mlflow.log_metric("train_acc", 100 - smape_train, step=epoch)
+            mlflow.log_metric("val_acc", 100 - smape_val, step=epoch)
 
 
     # Log giá trị loss cuối cùng
@@ -242,7 +303,7 @@ def train_timeseries_model(model, X_train, y_train, X_val, y_val, X_test, y_test
     final_train_loss=history.history["loss"][-1]
 
     logger.info("Training completed successfully.")
-    return model, final_train_loss, mape_eval, training_time
+    return model, final_train_loss, smape_test, training_time
 
 @task(name="evaluate_timeseries_model")
 def evaluate_timeseries_model(model, X_test, y_test, scaler):
@@ -281,7 +342,7 @@ def evaluate_timeseries_model(model, X_test, y_test, scaler):
         logger.info("Calculating performance metrics...")
         mse = mean_squared_error(y_test, y_pred)
         mae = mean_absolute_error(y_test, y_pred)
-        mape = smape(y_test, y_pred)
+        smape_eval = smape(y_test, y_pred)
 
         logger.info(f"Mean Squared Error (MSE): {mse}")
         logger.info(f"Mean Absolute Error (MAE): {mae}")
@@ -306,7 +367,7 @@ def evaluate_timeseries_model(model, X_test, y_test, scaler):
 
         logger.info("Evaluation process completed successfully.")
 
-        return mse, mae, mape
+        return mse, mae, smape_eval
 
     except Exception as e:
         logger.error(f"Error during model evaluation: {str(e)}")
@@ -346,7 +407,7 @@ def evaluate_timeseries_model(model, X_test, y_test, scaler):
 #     return model_dir, metadata_path
 
 @task(name="save_timeseries_model")
-def save_timeseries_model(model: tf.keras.models.Model, model_cfg: Dict[str, Union[str, List[str], List[int]]], final_train_loss: float, mape:float, model_train_info: Dict[str, Union[str, Dict[str, Union[str, int]]]]):
+def save_timeseries_model(model: tf.keras.models.Model, model_cfg: Dict[str, Union[str, List[str], List[int]]], final_train_loss: float, smape_test:float, model_train_info: Dict[str, Union[str, Dict[str, Union[str, int]]]]):
     logger = get_run_logger()
 
     # Bắt đầu một MLflow run nếu chưa có
@@ -404,7 +465,7 @@ def save_timeseries_model(model: tf.keras.models.Model, model_cfg: Dict[str, Uni
     # Đăng ký mô hình
     try:
         if not existing_versions:
-            description_model = (f"Using {model_type} for Time-series stock prediction task.")
+            description_model = (f"Using {model_type} for Time-series {model_name.replace('_', ' ')} task.")
             registered_model = mlflow.register_model(model_uri=model_uri, name=model_type)
             client.set_registered_model_tag(registered_model.name, "description", description_model)
             logger.info(f"Model registered with name: {registered_model.name}")
@@ -421,7 +482,7 @@ def save_timeseries_model(model: tf.keras.models.Model, model_cfg: Dict[str, Uni
     # Cập nhật metadata & chuyển trạng thái mô hình
     try:
         description_version = (
-            f"Version {model_version.version} of {model_type} model based time-series stock prediction. "
+            f"Version {model_version.version} of {model_type} model based time-series {model_name.replace('_', ' ')}. "
             f"Trained with dataset: {dataset_name}, "
             f"epochs: {model_cfg.get('epochs', 10)}, "
             f"learning rate: {model_cfg.get('learning_rate', 0.001)}."
@@ -442,9 +503,10 @@ def save_timeseries_model(model: tf.keras.models.Model, model_cfg: Dict[str, Uni
         tags = {
             "model_name": model_name,
             "model_type": model_type,
+            "training_log_file": model_train_info["log_file"],
             "framework": model_cfg["framework"],
             "status": "Deployed",
-            "accuracy": round(100*(1-mape),1),
+            "accuracy": round(100-smape_test,1),
             "dataset_name": dataset_name,
             "data_type": model_train_info["data_type"],
             "epochs": model_train_info["train_epochs"],
@@ -529,7 +591,13 @@ def load_timeseries_model(model_path: str):
     # Tải mô hình
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model file not found at {model_path}")
-    model = load_model(model_path)
+    # model = load_model(model_path)
+    # Chỉ định custom objects
+    model = load_model(model_path, custom_objects={
+        'smape_keras': smape_keras,  # Nếu bạn đã định nghĩa metric SMAPE của riêng bạn
+        'mae': MeanAbsoluteError,
+        'mape': MeanAbsolutePercentageError
+    })
     logger.info(f"Model loaded from {model_path}")
 
     # # Đọc metadata

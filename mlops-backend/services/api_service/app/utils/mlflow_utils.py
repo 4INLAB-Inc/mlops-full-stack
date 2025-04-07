@@ -6,6 +6,7 @@ import pandas as pd
 from mlflow.tracking import MlflowClient
 from fastapi import UploadFile
 import math, os, ast
+import re
 
 
 # Connect to MLflow server via URI
@@ -54,22 +55,26 @@ def get_experiment_info(experiment_id: str) -> Dict[str, Any]:
             # Reset minor and increment major version
             minor = 1
             major += 1
-        version = f"v{major}.{minor}.{patch}"
+        version = f"{major}.{minor}.{patch}"
     else:
         version = f"v1.0.{num_run}"  # Regular versioning for less than or equal to 10 runsversioning for less than or equal to 10 runs
     
     # Loop through all runs to find the latest run
     latest_run = None
-    for run in runs:
-        # Instead of using run['start_time'], we need to use run.info.start_time
-        current_start_time = run.info.start_time.timestamp() if isinstance(run.info.start_time, pd.Timestamp) else run.info.start_time
+    # for run in runs:
+    #     # Instead of using run['start_time'], we need to use run.info.start_time
+    #     current_start_time = run.info.start_time.timestamp() if isinstance(run.info.start_time, pd.Timestamp) else run.info.start_time
         
-        # Get start_time of the latest_run as a single value
-        latest_run_start_time = latest_run.info.start_time.timestamp() if latest_run is not None and isinstance(latest_run.info.start_time, pd.Timestamp) else latest_run.info.start_time if latest_run else None
+    #     # Get start_time of the latest_run as a single value
+    #     latest_run_start_time = latest_run.info.start_time.timestamp() if latest_run is not None and isinstance(latest_run.info.start_time, pd.Timestamp) else latest_run.info.start_time if latest_run else None
 
-        # Compare times to find the latest run
-        if latest_run is None or current_start_time > latest_run_start_time:
-            latest_run = run  # Update with the latest run
+    #     # Compare times to find the latest run
+    #     if latest_run is None or current_start_time > latest_run_start_time:
+    #         latest_run = run  # Update with the latest run
+    latest_run = max(
+        runs,
+        key=lambda r: r.info.start_time.timestamp() if isinstance(r.info.start_time, pd.Timestamp) else r.info.start_time
+    )
 
     # Check if there's a latest run
     if latest_run is not None:
@@ -85,8 +90,8 @@ def get_experiment_info(experiment_id: str) -> Dict[str, Any]:
         model_type = latest_run.data.tags.get('model_type', 'Unknown Model')
 
         # Get metrics (accuracy, loss) from the latest run
-        accuracy=float(run.data.tags.get('accuracy', 0.0)) if run.data.tags.get('accuracy') else 0.0
-        loss=float(run.data.tags.get('final_loss', 0.0)) if run.data.tags.get('final_loss') else 0.0
+        accuracy=float(latest_run.data.tags.get('accuracy', 0.0)) if latest_run.data.tags.get('accuracy') else 0.0
+        loss=float(latest_run.data.tags.get('final_loss', 0.0)) if latest_run.data.tags.get('final_loss') else 0.0
 
         # Check and cast accuracy and loss to float
         try:
@@ -422,6 +427,63 @@ def get_latest_run_for_experiment(experiment_id: str) -> Dict[str, Any]:
     }
 
     return run_info
+
+# Function to parse the log file and return logs in the desired format
+def parse_log_file(log_file_path: str) -> list:
+    log_entries = []
+    
+    try:
+        with open(log_file_path, 'r') as log_file:
+            log_lines = log_file.readlines()
+            
+            # Updated regex pattern to handle the timestamp with timezone, process ID, log level, and message
+            log_pattern = r'\[(?P<timestamp>[\d\-]+\s[\d:]+\s[+\-]\d{4})\]\s\[\d+\]\s\[(?P<level>[A-Z]+)\]\s(?P<message>.+)'
+            
+            for line in log_lines:
+                match = re.match(log_pattern, line.strip())
+                if match:
+                    timestamp = match.group('timestamp')
+                    level = match.group('level')
+                    message = match.group('message')
+                    
+                    # Append parsed log entry to the list
+                    log_entries.append({
+                        'timestamp': timestamp,
+                        'level': level,
+                        'message': message
+                    })
+    except Exception as e:
+        print(f"Error reading or parsing log file: {e}")
+    
+    return log_entries
+
+# Function to get the latest run information for an experiment
+def get_latest_run_logs(experiment_id: str) -> Dict[str, Any]:
+    # Initialize the MLflow client
+    client = MlflowClient()
+
+    # Get all runs for the experiment
+    runs = client.search_runs(experiment_ids=[experiment_id])
+    experiment_name = client.get_experiment(experiment_id).name
+
+    # Check if there are no runs
+    if not runs:
+        return None
+
+    # Sort runs by start time (start_time), get the latest run
+    latest_run = max(runs, key=lambda run: run.info.start_time)
+    
+    # Get the log file path from the tags of the latest run
+    log_file_path = latest_run.data.tags.get('log_file', 'Unknown')
+    
+    # If no log file path is found, return None
+    if log_file_path == 'Unknown':
+        return None
+    
+    # Parse the log file and return the logs in the desired format
+    latest_run_logs = parse_log_file(log_file_path)
+    
+    return latest_run_logs
 
 
 
