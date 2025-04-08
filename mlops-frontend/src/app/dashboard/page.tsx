@@ -623,7 +623,7 @@ interface Model {
   name: string;
   framework: string;
   version: string;
-  status: 'deployed' | 'training' | 'failed' | 'READY';
+  status: 'deployed' | 'training' | 'failed' | 'ready';
   accuracy: number;
   trainTime: string;
   dataset: string;
@@ -954,7 +954,7 @@ const ModelPerformance = memo(() => {
                   <MenuItem 
                     key={model.id} 
                     onClick={() => handleModelChange(model.name)}
-                    icon={model.status === 'READY' ? <Icon as={FiCpu} color="orange.100" /> : undefined}
+                    icon={model.status === 'ready' ? <Icon as={FiCpu} color="orange.100" /> : undefined}
                   >
                     <HStack justify="space-between" width="100%">
                       <Text>{model.name}</Text>
@@ -2302,7 +2302,7 @@ interface Model {
   name: string
   framework: string
   version: string
-  status: 'training' | 'deployed' | 'failed'
+  status: 'training' | 'deployed' | 'failed' | 'ready'
   accuracy: number
   trainTime: string
   dataset: string
