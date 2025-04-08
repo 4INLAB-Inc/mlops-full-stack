@@ -80,6 +80,7 @@ import {
   FiAlertCircle,
   FiAlertTriangle,
   FiArrowUpRight,
+  FiArrowDownRight,
   FiBarChart2,
   FiBeaker,
   FiBox,
@@ -146,7 +147,7 @@ import {
   DeltaType,
 } from '@tremor/react'
 
-import { parseISO, isAfter, isBefore, startOfWeek, endOfWeek } from 'date-fns';
+import { parseISO, isAfter, isBefore, startOfWeek, endOfWeek,subWeeks, isWithinInterval } from 'date-fns';
 
 const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false })
 const ModelPerformanceChart = dynamic(() => import('@/components/models/ModelPerformanceChart'), { 
@@ -1516,34 +1517,64 @@ const ResourceUsageStats = memo(() => {
 ResourceUsageStats.displayName = 'ResourceUsageStats'
 
 // 데이터셋 분포 차트 옵션
-const DatasetDistribution = memo(() => {
+const DatasetDistribution = memo(()=> {
+  const [datasetSplit, setDatasetSplit] = useState({
+    train_set: 0,
+    val_set: 0,
+    test_set: 0,
+    outside_set: 0
+  })
   const bgColor = useColorModeValue('white', 'gray.800')
   const textColor = useColorModeValue('gray.800', 'gray.100')
   const mutedColor = useColorModeValue('gray.600', 'gray.400')
   const borderColor = useColorModeValue('gray.100', 'gray.700')
 
+  useEffect(() => {
+    const fetchLatestDatasetSplit = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/datasets/`)
+        const data = await response.json()
+        const datasets = Object.values(data)
+
+        if (datasets.length === 0) return
+
+        const latest = datasets.reduce((a: any, b: any) => {
+          return new Date(a.lastModified) > new Date(b.lastModified) ? a : b
+        })
+
+        setDatasetSplit(latest.split_ratio || {})
+      } catch (error) {
+        console.error('Failed to fetch dataset split:', error)
+      }
+    }
+
+    fetchLatestDatasetSplit()
+  }, [])
+
+
   const datasets = [
     {
       type: '학습',
-      count: 12500,
+      // count: 12500,
+      count: datasetSplit.train_set ?? 0,
       trend: '+2.4%',
       color: useColorModeValue('#4C6FFF', '#6B8AFF'), // 밝은 파랑
     },
     {
       type: '검증',
-      count: 2500,
+      count: datasetSplit.val_set ?? 0,
       trend: '+1.2%',
       color: useColorModeValue('#00B7D4', '#19CDEA'), // 청록색
     },
     {
       type: '테스트',
-      count: 5000,
+      count: datasetSplit.test_set ?? 0,
       trend: '+1.8%',
       color: useColorModeValue('#8E33FF', '#A05FFF'), // 보라색
     },
     {
       type: '외부',
-      count: 8000,
+      count: datasetSplit.outside_set ?? 0,
       trend: '+3.1%',
       color: useColorModeValue('#00CC88', '#19E6A1'), // 민트
     }
@@ -2340,6 +2371,12 @@ interface DatasetMetrics {
   lastUpdated: string
 }
 
+interface DatasetChange {
+  // change: number
+  changeText: string
+  color: string
+}
+
 // // API 호출 함수들
 // const fetchDashboardData = async () => {
 //   // TODO: 실제 API 엔드포인트로 교체
@@ -2487,11 +2524,37 @@ const fetchDashboardData = async () => {
     }));
 
     // 데이터셋 통계 계산
+    const allDatasets = Object.values(datasetsData);
     const totalDatasets = Object.keys(datasetsData).length;
     const totalSamples = Object.values(datasetsData).reduce((acc, dataset) => acc + dataset.rows, 0);
     const avgQualityScore = Object.values(datasetsData).reduce((acc, dataset) => acc + dataset.quality.consistency, 0) / totalDatasets;
     const lastUpdated = Object.values(datasetsData).reduce((latest, dataset) => 
       new Date(dataset.lastModified) > new Date(latest) ? dataset.lastModified : latest, "");
+
+    // Calculate dataset change (this week vs last week)
+    const now = new Date();
+    const thisWeekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+    const lastWeekStart = subWeeks(thisWeekStart, 1);            // Monday last week
+    const lastWeekEnd = new Date(thisWeekStart.getTime() - 1);   // Sunday last week
+
+    const thisWeek = allDatasets.filter(ds => {
+      const created = parseISO(ds.createdAt);
+      return isWithinInterval(created, { start: thisWeekStart, end: now });
+    });
+
+    const lastWeek = allDatasets.filter(ds => {
+      const created = parseISO(ds.createdAt);
+      return isWithinInterval(created, { start: lastWeekStart, end: lastWeekEnd });
+    });
+
+    const rawChange = thisWeek.length - lastWeek.length;
+
+
+    const datasetChange = {
+      // change: Math.abs(rawChange), // Ví dụ: 17.3%
+      changeText: `${Math.abs(rawChange)}개 ${rawChange >= 0 ? "증가" : "감소"}`, // (이번주: ${thisWeek.length}개 → 지난주: ${lastWeek.length}개)
+      color: rawChange >= 0 ? "orange" : "red",
+    };
 
     // 리소스 사용량 데이터 (API 제공 없음으로 인해 가상 데이터 사용)
     const resourceUsage = {
@@ -2510,7 +2573,8 @@ const fetchDashboardData = async () => {
         totalSamples,
         avgQualityScore,
         lastUpdated
-      }
+      },
+      datasetChange
     };
   } catch (error) {
     console.error('대시보드 데이터를 가져오는 중 오류 발생:', error);
@@ -2525,6 +2589,7 @@ const useDashboardData = () => {
     experiments: Experiment[]
     resourceUsage: ResourceUsage
     datasetMetrics: DatasetMetrics
+    datasetChange: DatasetChange
   } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -2683,17 +2748,66 @@ export default function DashboardPage() {
     experiments: experiments.length
   }
 
-
+  //Gets completed experiments updated this week.
   const experimentsThisWeek = experiments.filter(e => {
     if (e.status !== 'completed') return false;
 
-    const updated = parseISO(e.updatedAt); // Chuyển string thành Date
+    const updated = parseISO(e.updatedAt); 
     const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Thứ 2
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Chủ nhật
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
 
     return isAfter(updated, weekStart) && isBefore(updated, weekEnd);
   });
+
+
+  //Function to Calculate and compares weekly average accuracy of valid models.
+  function getModelAverageAccuracyStats(models) {
+    const now = new Date();
+  
+    // Get the start of this week (Monday) and last week
+    const thisWeekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const lastWeekStart = subWeeks(thisWeekStart, 1);
+    const lastWeekEnd = new Date(thisWeekStart.getTime() - 1); // Sunday of last week
+  
+    // Filter models that have a valid accuracy (greater than 0)
+    const validModels = models.filter(m => m.accuracy > 0);
+  
+    // Filter models updated this week
+    const thisWeekModels = validModels.filter(m => {
+      const updated = parseISO(m.updatedAt);
+      return isWithinInterval(updated, { start: thisWeekStart, end: now });
+    });
+  
+    // Filter models updated last week
+    const lastWeekModels = validModels.filter(m => {
+      const updated = parseISO(m.updatedAt);
+      return isWithinInterval(updated, { start: lastWeekStart, end: lastWeekEnd });
+    });
+  
+    // Helper to calculate average accuracy
+    const avg = (arr) =>
+      arr.length > 0 ? arr.reduce((sum, m) => sum + m.accuracy, 0) / arr.length : 0;
+  
+    const thisWeekAvg = avg(thisWeekModels);
+    const lastWeekAvg = avg(lastWeekModels);
+  
+    const change = (thisWeekAvg - lastWeekAvg).toFixed(1);
+    const isImproved = thisWeekAvg >= lastWeekAvg;
+    const changeText = `${Math.abs(change)}% ${isImproved ? "향상" : "감소"}`; //(지난주: ${lastWeekAvg.toFixed(1)}% → 이번주: ${thisWeekAvg.toFixed(1)}%)
+    const color = isImproved ? "green" : "red";
+  
+    return {
+      value: thisWeekAvg.toFixed(1), // Current average accuracy
+      change: Math.abs(change),      // Absolute change from last week
+      changeText,                    // "Improved" or "Decreased"
+      color                          // Color indicator for display
+    };
+  }
+  const model_stats = getModelAverageAccuracyStats(models);
+
+
+
 
   return (
     <Box as="main" p={4}>
@@ -2747,10 +2861,13 @@ export default function DashboardPage() {
               title="총 데이터셋"
               value={datasetMetrics.totalDatasets}
               unit="개"
-              change={12}
-              changeText="증가"
-              color="orange"
+              // change={12}
+              // changeText="증가"
+              // color="orange"
+              changeText={data.datasetChange.changeText}
+              color={data.datasetChange.color}
             />
+
             <StatsCard
               icon={FiCpu}
               title="학습 중인 모델"
@@ -2762,11 +2879,16 @@ export default function DashboardPage() {
             <StatsCard
               icon={FiActivity}
               title="평균 정확도"
-              value={(stats.deployedModels / stats.totalModels * 100).toFixed(1)}
+              // value={(stats.deployedModels / stats.totalModels * 100).toFixed(1)}
+              // unit="%"
+              // change={2.4}
+              // changeText="향상"
+              // color="green"
+              value={model_stats.value}
               unit="%"
-              change={2.4}
-              changeText="향상"
-              color="green"
+              change={model_stats.change}
+              changeText={model_stats.changeText}
+              color={model_stats.color}
             />
             <StatsCard
               icon={FiCheckCircle}
@@ -2836,11 +2958,22 @@ const StatsCard = memo(({ icon, title, value, unit, change, changeText, status, 
           {value}
           <Text as="span" fontSize="sm" color="gray.500" ml={1}>{unit}</Text>
         </Text>
-        {(change || status) && (
+        {/* {(change || status) && (
           <Badge colorScheme={color} variant="subtle" borderRadius="full">
             <HStack spacing={1}>
               {change && <Icon as={FiArrowUpRight} boxSize={3} />}
               <Text>{change ? `${change}% ${changeText}` : status}</Text>
+            </HStack>
+          </Badge>
+        )} */}
+        {(changeText || status) && (
+          <Badge colorScheme={color} variant="subtle" borderRadius="full">
+            <HStack spacing={1}>
+              {changeText && <Icon
+                                as={changeText.includes("감소") ? FiArrowDownRight : FiArrowUpRight}
+                                boxSize={3}
+                              />}
+              <Text>{changeText ?? status}</Text>
             </HStack>
           </Badge>
         )}
