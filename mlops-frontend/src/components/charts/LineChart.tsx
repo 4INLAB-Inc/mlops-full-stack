@@ -82,7 +82,7 @@ export default function LineChart({ data, categories, xLabel, yLabel }: LineChar
     },
     xaxis: {
       categories: categories,
-      tickAmount: 20, // giới hạn số nhãn trục X
+      tickAmount: 20,
       title: {
         text: xLabel || '',
         style: {

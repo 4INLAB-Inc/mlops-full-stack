@@ -108,206 +108,13 @@ interface NodeData {
   error?: string
 }
 
-// const initialNodes: Node[] = [
-//   {
-//     id: '1',
-//     type: 'workflowNode',
-//     position: { x: 100, y: 100 },
-//     data: {
-//       label: '데이터 수집',
-//       type: 'data_collection',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         source: 'Local',
-//         format: 'Csv',
-//         version: 'latest'
-//       },
-//       metrics: {
-//         '데이터 크기': '2.3GB',
-//         '레코드 수': '1.2M'
-//       }
-//     }
-//   },
-//   {
-//     id: '2',
-//     type: 'workflowNode',
-//     position: { x: 500, y: 100 },
-//     data: {
-//       label: '데이터 검증',
-//       type: 'data_validation',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         checks: ['missing_values', 'duplicates', 'data_type'],
-//         threshold: 0.8
-//       },
-//       metrics: {
-//         '유효성': '98.5%',
-//         '누락률': '0.2%'
-//       }
-//     }
-//   },
-//   {
-//     id: '3',
-//     type: 'workflowNode',
-//     position: { x: 900, y: 100 },
-//     data: {
-//       label: '특성 엔지니어링',
-//       type: 'feature_engineering',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         methods: ['scaling', 'encoding', 'selection'],
-//         feature_selection: 'correlation'
-//       },
-//       metrics: {
-//         '선택된 특성': '42개',
-//         '처리 시간': '45s'
-//       }
-//     }
-//   },
-//   {
-//     id: '4',
-//     type: 'workflowNode',
-//     position: { x: 1300, y: 100 },
-//     data: {
-//       label: '데이터 분할',
-//       type: 'data_split',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         train: 0.7,
-//         validation: 0.15,
-//         test: 0.15,
-//         random_state: 42
-//       }
-//     }
-//   },
-//   {
-//     id: '5',
-//     type: 'workflowNode',
-//     position: { x: 1700, y: 100 },
-//     data: {
-//       label: '모델 학습',
-//       type: 'model_training',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         model: 'xgboost',
-//         epochs: 100,
-//         batch_size: 32,
-//         learning_rate: 0.001
-//       },
-//       metrics: {
-//         'Train Loss': '0.234',
-//         'Val Loss': '0.245',
-//         'Train Acc': '0.892',
-//         'Val Acc': '0.885'
-//       }
-//     }
-//   },
-//   {
-//     id: '6',
-//     type: 'workflowNode',
-//     position: { x: 2100, y: 100 },
-//     data: {
-//       label: '모델 평가',
-//       type: 'model_evaluation',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         metrics: ['accuracy', 'precision', 'recall', 'f1'],
-//         cross_validation: 5
-//       },
-//       metrics: {
-//         'Test Acc': '0.883',
-//         'F1 Score': '0.875',
-//         'AUC': '0.912'
-//       }
-//     }
-//   },
-//   {
-//     id: '7',
-//     type: 'workflowNode',
-//     position: { x: 2500, y: 100 },
-//     data: {
-//       label: '모델 분석',
-//       type: 'model_analysis',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         analysis_type: ['feature_importance', 'shap_values'],
-//         visualization: true
-//       },
-//       metrics: {
-//         'Top Feature': 'age',
-//         'Impact Score': '0.324'
-//       }
-//     }
-//   },
-//   {
-//     id: '8',
-//     type: 'workflowNode',
-//     position: { x: 2900, y: 100 },
-//     data: {
-//       label: '모델 버전 관리',
-//       type: 'model_versioning',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         storage: 'mlflow',
-//         tags: ['production', 'latest']
-//       }
-//     }
-//   },
-//   {
-//     id: '9',
-//     type: 'workflowNode',
-//     position: { x: 3300, y: 100 },
-//     data: {
-//       label: '모델 배포',
-//       type: 'model_deployment',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         target: 'production',
-//         version: '1.0',
-//         platform: 'kubernetes'
-//       },
-//       metrics: {
-//         '응답 시간': '120ms',
-//         'TPS': '1000'
-//       }
-//     }
-//   },
-//   {
-//     id: '10',
-//     type: 'workflowNode',
-//     position: { x: 3700, y: 100 },
-//     data: {
-//       label: '모니터링',
-//       type: 'monitoring',
-//       status: 'idle',
-//       progress: 0,
-//       parameters: {
-//         metrics: ['performance', 'drift'],
-//         interval: '1h'
-//       },
-//       metrics: {
-//         '정확도 드리프트': '0.015',
-//         '평균 지연 시간': '85ms'
-//       }
-//     }
-//   }
-// ];
 const initialNodes: Node[] = [
   {
     id: '1',
     type: 'workflowNode',
     position: { x: 100, y: 100 },
     data: {
-      label: 'Data Collection',
+      label: '데이터 수집',
       type: 'data_collection',
       status: 'idle',
       progress: 0,
@@ -317,8 +124,8 @@ const initialNodes: Node[] = [
         version: 'latest'
       },
       metrics: {
-        'Data Size': '2.3GB',
-        'Record Count': '1.2M'
+        '데이터 크기': '2.3GB',
+        '레코드 수': '1.2M'
       }
     }
   },
@@ -327,7 +134,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 500, y: 100 },
     data: {
-      label: 'Data Validation',
+      label: '데이터 검증',
       type: 'data_validation',
       status: 'idle',
       progress: 0,
@@ -336,8 +143,8 @@ const initialNodes: Node[] = [
         threshold: 0.8
       },
       metrics: {
-        'Validity': '98.5%',
-        'Missing Rate': '0.2%'
+        '유효성': '98.5%',
+        '누락률': '0.2%'
       }
     }
   },
@@ -346,7 +153,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 900, y: 100 },
     data: {
-      label: 'Feature Engineering',
+      label: '특성 엔지니어링',
       type: 'feature_engineering',
       status: 'idle',
       progress: 0,
@@ -355,8 +162,8 @@ const initialNodes: Node[] = [
         feature_selection: 'correlation'
       },
       metrics: {
-        'Selected Features': '42',
-        'Processing Time': '45s'
+        '선택된 특성': '42개',
+        '처리 시간': '45s'
       }
     }
   },
@@ -365,7 +172,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 1300, y: 100 },
     data: {
-      label: 'Data Splitting',
+      label: '데이터 분할',
       type: 'data_split',
       status: 'idle',
       progress: 0,
@@ -382,7 +189,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 1700, y: 100 },
     data: {
-      label: 'Model Training',
+      label: '모델 학습',
       type: 'model_training',
       status: 'idle',
       progress: 0,
@@ -405,7 +212,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 2100, y: 100 },
     data: {
-      label: 'Model Evaluation',
+      label: '모델 평가',
       type: 'model_evaluation',
       status: 'idle',
       progress: 0,
@@ -425,7 +232,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 2500, y: 100 },
     data: {
-      label: 'Model Analysis',
+      label: '모델 분석',
       type: 'model_analysis',
       status: 'idle',
       progress: 0,
@@ -444,7 +251,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 2900, y: 100 },
     data: {
-      label: 'Model Versioning',
+      label: '모델 버전 관리',
       type: 'model_versioning',
       status: 'idle',
       progress: 0,
@@ -459,7 +266,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 3300, y: 100 },
     data: {
-      label: 'Model Deployment',
+      label: '모델 배포',
       type: 'model_deployment',
       status: 'idle',
       progress: 0,
@@ -469,7 +276,7 @@ const initialNodes: Node[] = [
         platform: 'kubernetes'
       },
       metrics: {
-        'Response Time': '120ms',
+        '응답 시간': '120ms',
         'TPS': '1000'
       }
     }
@@ -479,7 +286,7 @@ const initialNodes: Node[] = [
     type: 'workflowNode',
     position: { x: 3700, y: 100 },
     data: {
-      label: 'Monitoring',
+      label: '모니터링',
       type: 'monitoring',
       status: 'idle',
       progress: 0,
@@ -488,12 +295,13 @@ const initialNodes: Node[] = [
         interval: '1h'
       },
       metrics: {
-        'Accuracy Drift': '0.015',
-        'Average Latency': '85ms'
+        '정확도 드리프트': '0.015',
+        '평균 지연 시간': '85ms'
       }
     }
   }
 ];
+
 
 
 const initialEdges: Edge[] = [
@@ -1493,7 +1301,7 @@ function PipelineContent() {
         switch (type) {
           case 'data_collection':
             return {
-              label: 'Data collection', //데이터 수집
+              label: '데이터 수집', //데이터 수집
               type: 'data_collection',
               status: 'idle',
               progress: 0,
@@ -1509,7 +1317,7 @@ function PipelineContent() {
             }
           case 'data_validation':
             return {
-              label: 'Data validation', //데이터 검증
+              label: '데이터 검증', //데이터 검증
               type: 'data_validation',
               status: 'idle',
               progress: 0,
@@ -1524,7 +1332,7 @@ function PipelineContent() {
             }
           case 'feature_engineering':
             return {
-              label: 'Feature engineering', //특성 엔지니어링
+              label: '특성 엔지니어링', //특성 엔지니어링
               type: 'feature_engineering',
               status: 'idle',
               progress: 0,
@@ -1539,7 +1347,7 @@ function PipelineContent() {
             }
           case 'data_split':
             return {
-              label: 'Data split', //데이터 분할
+              label: '데이터 분할', //데이터 분할
               type: 'data_split',
               status: 'idle',
               progress: 0,
@@ -1552,7 +1360,7 @@ function PipelineContent() {
             }
           case 'model_training':
             return {
-              label: 'Model training', //모델 학습
+              label: '모델 학습', //모델 학습
               type: 'model_training',
               status: 'idle',
               progress: 0,
@@ -1571,7 +1379,7 @@ function PipelineContent() {
             }
           case 'model_evaluation':
             return {
-              label: 'Model evaluation', //모델 평가
+              label: '모델 평가', //모델 평가
               type: 'model_evaluation',
               status: 'idle',
               progress: 0,
@@ -1587,7 +1395,7 @@ function PipelineContent() {
             }
           case 'model_analysis':
             return {
-              label: 'Model analysis', //모델 분석석
+              label: '모델 분석석', //모델 분석석
               type: 'model_analysis',
               status: 'idle',
               progress: 0,
@@ -1602,7 +1410,7 @@ function PipelineContent() {
             }
           case 'model_versioning':
             return {
-              label: 'Model versioning', //모델 버전 관리
+              label: '모델 버전 관리', //모델 버전 관리
               type: 'model_versioning',
               status: 'idle',
               progress: 0,
@@ -1613,7 +1421,7 @@ function PipelineContent() {
             }
           case 'model_deployment':
             return {
-              label: 'Model deployment', //모델 배포
+              label: '모델 배포', //모델 배포
               type: 'model_deployment',
               status: 'idle',
               progress: 0,
@@ -1629,7 +1437,7 @@ function PipelineContent() {
             }
           case 'monitoring':
             return {
-              label: 'Monitoring', //모니터링
+              label: '모니터링', //모니터링
               type: 'monitoring',
               status: 'idle',
               progress: 0,
@@ -1846,20 +1654,20 @@ function PipelineContent() {
     })
 
     // 토스트 알림
-    // toast({
-    //   title: '노드 연결됨',
-    //   description: `${sourceNode.data.label} → ${targetNode.data.label}`,
-    //   status: 'info',
-    //   duration: 2000,
-    //   isClosable: true,
-    // })
     toast({
-      title: 'Node Connected',
+      title: '노드 연결됨',
       description: `${sourceNode.data.label} → ${targetNode.data.label}`,
       status: 'info',
       duration: 2000,
       isClosable: true,
-    });
+    })
+    // toast({
+    //   title: 'Node Connected',
+    //   description: `${sourceNode.data.label} → ${targetNode.data.label}`,
+    //   status: 'info',
+    //   duration: 2000,
+    //   isClosable: true,
+    // });
 
 
   }, [nodes, setEdges, toast])

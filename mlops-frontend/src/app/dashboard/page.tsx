@@ -862,6 +862,9 @@ const ModelPerformance = memo(() => {
           text: '손실'
         },
         labels: {
+          formatter: function (value) {
+            return value.toFixed(5);
+          },
           style: {
             fontFamily: 'Pretendard'
           }
@@ -872,6 +875,17 @@ const ModelPerformance = memo(() => {
       theme: 'dark',
       x: {
         show: false
+      },
+      y: {
+        formatter: function (value, { seriesIndex }) {
+          if (seriesIndex === 1) {
+            // 손실 (Loss)
+            return value.toFixed(5);
+          } else {
+            // 정확도 (Accuracy)
+            return `${value.toFixed(2)}%`;
+          }
+        }
       }
     },
     legend: {
