@@ -29,8 +29,8 @@ interface ExperimentCardProps {
       accuracy: number
       loss: number
     }
-    created: string
-    updated: string
+    createdAt: string
+    updatedAt: string
   }
   isSelected?: boolean
   onClick: () => void
@@ -149,7 +149,7 @@ export function ExperimentCard({ experiment, isSelected, onClick, onDoubleClick 
           )}
 
           <Text fontSize="xs" color="gray.500">
-            마지막 수정: {new Date(experiment.updated).toLocaleDateString()}
+            마지막 수정: {new Date(experiment.updatedAt).toLocaleDateString()}
           </Text>
         </Stack>
       </CardBody>

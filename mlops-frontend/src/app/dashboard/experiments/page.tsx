@@ -184,6 +184,7 @@ export default function ExperimentsPage() {
             <option value="running">실행 중</option>
             <option value="completed">완료</option>
             <option value="failed">실패</option>
+            <option value="killed">중지됨</option>
           </Select>
           <Select
             maxW="200px"

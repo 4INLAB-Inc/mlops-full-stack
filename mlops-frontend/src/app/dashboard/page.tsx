@@ -146,6 +146,8 @@ import {
   DeltaType,
 } from '@tremor/react'
 
+import { parseISO, isAfter, isBefore, startOfWeek, endOfWeek } from 'date-fns';
+
 const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false })
 const ModelPerformanceChart = dynamic(() => import('@/components/models/ModelPerformanceChart'), { 
   ssr: false,
@@ -882,6 +884,7 @@ const ModelPerformance = memo(() => {
             // 손실 (Loss)
             return value.toFixed(5);
           } else {
+
             // 정확도 (Accuracy)
             return `${value.toFixed(2)}%`;
           }
@@ -2479,7 +2482,8 @@ const fetchDashboardData = async () => {
       status: exp.status,
       startTime: exp.startTime,
       endTime: exp.endTime || null,
-      metrics: exp.metrics
+      metrics: exp.metrics,
+      updatedAt: exp.updatedAt
     }));
 
     // 데이터셋 통계 계산
@@ -2679,6 +2683,18 @@ export default function DashboardPage() {
     experiments: experiments.length
   }
 
+
+  const experimentsThisWeek = experiments.filter(e => {
+    if (e.status !== 'completed') return false;
+
+    const updated = parseISO(e.updatedAt); // Chuyển string thành Date
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Thứ 2
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Chủ nhật
+
+    return isAfter(updated, weekStart) && isBefore(updated, weekEnd);
+  });
+
   return (
     <Box as="main" p={4}>
       <ErrorBoundary FallbackComponent={ErrorFallback}>
@@ -2757,7 +2773,7 @@ export default function DashboardPage() {
               title="완료된 실험"
               value={experiments.filter(e => e.status === 'completed').length}
               unit="개"
-              status="이번 주 8개"
+              status={`이번 주 ${experimentsThisWeek.length}개`}
               color="purple"
             />
           </SimpleGrid>
