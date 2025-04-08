@@ -4,6 +4,7 @@
 
 1. 의존성 설치
 ```bash
+cd mlops-frontend
 npm install
 npm install axios express multer cors
 ```
