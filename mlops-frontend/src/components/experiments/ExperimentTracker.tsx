@@ -88,58 +88,58 @@ const ExperimentTracker = () => {
   const headerBg = useColorModeValue('gray.50', 'gray.700')
   const rowHoverBg = useColorModeValue('gray.50', 'gray.700')
 
-  // useEffect(() => {
-  //   const fetchExperiments = async () => {
-  //     try {
-  //       const response = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/experiments/`);
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! Status: ${response.status}`);
-  //       }
-  //       const data = await response.json();
-  //       setExperiments(data);
-
-  //     } catch (error) {
-  //       setError(error.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchExperiments();
-  // }, []);
-
   useEffect(() => {
-    axios.get(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/experiments`)  // API call using environment variable
-      .then((response) => {
-        // Get the experiments data
-        const updatedExperiments = response.data.map((experiment) => {
-          // Check and modify accuracy if it's not in the range [0, 1]
-          if (experiment.metrics.accuracy < 0 || experiment.metrics.accuracy > 1 && typeof experiment.metrics.accuracy === 'number') {
-            // Generate a random accuracy value between 0.85 and 0.99, and ensure it's a valid number
-            experiment.metrics.accuracy = parseFloat((Math.random() * (0.99 - 0.85) + 0.85).toFixed(4));  // Random between 0.85 and 0.99
-          } else {
-            // Ensure accuracy is a valid number
-            experiment.metrics.accuracy = 0;
-          }
-  
-          // Check and modify loss if it's greater than 1
-          if (experiment.metrics.loss > 1) {
-            // Generate a random loss value between 0.001 and 0.02, and ensure it's a valid number
-            const randomLoss = Math.random() * (0.02 - 0.001) + 0.001;
-            experiment.metrics.loss = parseFloat(randomLoss.toFixed(4));  // Format the loss to 4 decimal places
-          }
-  
-          return experiment;
-        });
-  
-        setExperiments(updatedExperiments);  // Store modified experiments data in state
-        setLoading(false);  // Update the loading state to false when data fetching is complete
-      })
-      .catch((error) => {
-        console.error('Error fetching experiments:', error);
-        setLoading(false);  // Update the loading state even if there is an error
-      });
+    const fetchExperiments = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/experiments/`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setExperiments(data);
+
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExperiments();
   }, []);
+
+  // useEffect(() => {
+  //   axios.get(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/experiments`)  // API call using environment variable
+  //     .then((response) => {
+  //       // Get the experiments data
+  //       const updatedExperiments = response.data.map((experiment) => {
+  //         // Check and modify accuracy if it's not in the range [0, 1]
+  //         if (experiment.metrics.accuracy < 0 || experiment.metrics.accuracy > 1 && typeof experiment.metrics.accuracy === 'number') {
+  //           // Generate a random accuracy value between 0.85 and 0.99, and ensure it's a valid number
+  //           experiment.metrics.accuracy = parseFloat((Math.random() * (0.99 - 0.85) + 0.85).toFixed(4));  // Random between 0.85 and 0.99
+  //         } else {
+  //           // Ensure accuracy is a valid number
+  //           experiment.metrics.accuracy = 0;
+  //         }
+  
+  //         // Check and modify loss if it's greater than 1
+  //         if (experiment.metrics.loss > 1) {
+  //           // Generate a random loss value between 0.001 and 0.02, and ensure it's a valid number
+  //           const randomLoss = Math.random() * (0.02 - 0.001) + 0.001;
+  //           experiment.metrics.loss = parseFloat(randomLoss.toFixed(4));  // Format the loss to 4 decimal places
+  //         }
+  
+  //         return experiment;
+  //       });
+  
+  //       setExperiments(updatedExperiments);  // Store modified experiments data in state
+  //       setLoading(false);  // Update the loading state to false when data fetching is complete
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error fetching experiments:', error);
+  //       setLoading(false);  // Update the loading state even if there is an error
+  //     });
+  // }, []);
 
   if (loading) {
     return (
@@ -216,12 +216,12 @@ const ExperimentTracker = () => {
                 </Td>
                 <Td fontSize="sm">
                   {exp.metrics && exp.metrics.accuracy !== undefined
-                    ? `${exp.metrics.accuracy.toFixed(2)*100}%`
+                    ? `${exp.metrics.accuracy.toFixed(1)}%`
                     : 'N/A'}
                 </Td>
                 <Td fontSize="sm">
                   {exp.metrics && exp.metrics.loss !== undefined
-                    ? `${exp.metrics.loss.toFixed(4)}`
+                    ? `${exp.metrics.loss.toFixed(5)}`
                     : 'N/A'}
                 </Td>
                 <Td fontSize="sm">
