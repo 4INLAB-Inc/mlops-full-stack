@@ -6,7 +6,7 @@ const fs = require("fs");
 
 const app = express();
 
-const serverUrl = process.env.NEXT_PUBLIC_SERVER_NODE_API || 'http://localhost:4000';  // 기본값을 설정
+const serverUrl = process.env.NEXT_PUBLIC_SERVER_NODE_API || 'http://192.168.219.52:4000';  // 기본값을 설정
 const { hostname, port } = new URL(serverUrl);  // URL 객체를 사용하여 hostname과 port 추출
 
 // 🟢 모든 요청을 localhost:3000에서 허용

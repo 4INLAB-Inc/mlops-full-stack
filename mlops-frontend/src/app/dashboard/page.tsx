@@ -2743,7 +2743,8 @@ export default function DashboardPage() {
 
   const stats = {
     totalModels: models.length,
-    trainingModels: models.filter(model => model.status === 'training').length,
+    // trainingModels: models.filter(model => model.status === 'training').length,
+    trainingModels: experiments.filter(experiment => experiment.status === 'running').length,  //설험 실행 중인 것 표시시
     deployedModels: models.filter(model => model.servingStatus?.isDeployed).length,
     experiments: experiments.length
   }

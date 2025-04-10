@@ -23,6 +23,8 @@ export default function LineChart({ data, categories, xLabel, yLabel }: LineChar
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
 
+  const safeTickAmount = categories && categories.length < 20 ? categories.length : 20;
+
   const options = {
     chart: {
       type: 'line' as const,
@@ -82,7 +84,7 @@ export default function LineChart({ data, categories, xLabel, yLabel }: LineChar
     },
     xaxis: {
       categories: categories,
-      tickAmount: 20,
+      tickAmount: safeTickAmount,
       title: {
         text: xLabel || '',
         style: {
@@ -94,7 +96,7 @@ export default function LineChart({ data, categories, xLabel, yLabel }: LineChar
         style: {
           colors: isDark ? '#CBD5E0' : '#4A5568',
           fontSize: '12px'
-        }
+        },
       },
       axisBorder: {
         show: false

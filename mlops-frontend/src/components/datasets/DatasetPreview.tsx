@@ -299,7 +299,12 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={stat.histogram}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="bin" />
+                            <XAxis
+                                dataKey="bin"
+                                tickFormatter={(value) =>
+                                  typeof value === 'number' ? value.toFixed(1) : value
+                                }
+                              />
                             <YAxis />
                             <RechartsTooltip />
                             <Bar dataKey="count" fill="#3182CE" />
@@ -332,8 +337,24 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
                           dataKey={
                             dataset?.features?.find(f => f.type.includes('datetime'))?.name || 'INPUT_DATE'
                           }
-                        />
-
+                          tickFormatter={(value) => {
+                            const date = new Date(value);
+                            if (isNaN(date)) return value;
+                        
+                            const yy = String(date.getFullYear()).slice(2);
+                            const MM = String(date.getMonth() + 1).padStart(2, '0');
+                            const dd = String(date.getDate()).padStart(2, '0');
+                            const HH = String(date.getHours()).padStart(2, '0');
+                            const mm = String(date.getMinutes()).padStart(2, '0');
+                        
+                            return `${yy}-${MM}-${dd} ${HH}:${mm}`;
+                          }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          tickCount={100}
+                          tick={{ fontSize: 10 }}
+                          />
                         <YAxis />
                         <RechartsTooltip />
 
@@ -401,13 +422,25 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
                       {pairs.map(({ xKey, yKey }, idx) => (
                         <Card key={`${xKey}-${yKey}-${idx}`} bg={bgCard} borderColor={borderColor} borderWidth={1}>
                           <CardBody>
-                            <Text fontWeight="bold" mb={4}>{xKey} vs {yKey}</Text>
+                            <Text fontWeight="bold" mb={4}>상관관계 ({xKey} vs {yKey})</Text>
                             <Box h="300px">
                               <ResponsiveContainer width="100%" height="100%">
                                 <ScatterChart>
                                   <CartesianGrid strokeDasharray="3 3" />
-                                  <XAxis dataKey={xKey} name={xKey} />
-                                  <YAxis dataKey={yKey} name={yKey} />
+                                  <XAxis
+                                    dataKey={xKey}
+                                    name={xKey}
+                                    tickFormatter={(value) =>
+                                      typeof value === 'number' ? value.toFixed(1) : value
+                                    }
+                                  />
+                                  <YAxis
+                                    dataKey={yKey}
+                                    name={yKey}
+                                    tickFormatter={(value) =>
+                                      typeof value === 'number' ? value.toFixed(1) : value
+                                    }
+                                  />
                                   <RechartsTooltip />
                                   <Scatter data={data} fill="#3182CE" />
                                 </ScatterChart>

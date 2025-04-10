@@ -24,6 +24,7 @@ import {
 } from '@chakra-ui/react'
 import { FiCpu, FiDatabase, FiClock, FiCalendar } from 'react-icons/fi'
 import { LiveLogs } from './LiveLogs'
+import { LiveMetricsPanel } from './LiveMetricsPanel'
 import dynamic from 'next/dynamic'
 
 const LineChart = dynamic(() => import('@/components/charts/LineChart'), { ssr: false })
@@ -136,7 +137,7 @@ export function ExperimentDetails({ experiment }: ExperimentDetailsProps) {
             <TabPanels>
               {/* 학습 곡선 */}
               <TabPanel>
-                <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+                {/* <Grid templateColumns="repeat(2, 1fr)" gap={6}>
                   <GridItem>
                     <Card variant="outline">
                       <CardBody>
@@ -199,7 +200,8 @@ export function ExperimentDetails({ experiment }: ExperimentDetailsProps) {
                       </CardBody>
                     </Card>
                   </GridItem>
-                </Grid>
+                </Grid> */}
+                <LiveMetricsPanel experimentId={experiment.id} />
               </TabPanel>
 
               {/* 하이퍼파라미터 */}

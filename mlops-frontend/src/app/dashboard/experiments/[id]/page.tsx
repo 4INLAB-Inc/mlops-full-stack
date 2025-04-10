@@ -37,6 +37,10 @@ export default function ExperimentPage() {
     };
 
     fetchExperimentData();
+
+    // const interval = setInterval(fetchExperimentData, 10000);
+
+    // return () => clearInterval(interval); 
   }, [id]); // Re-run when `id` changes
 
   if (loading) {
