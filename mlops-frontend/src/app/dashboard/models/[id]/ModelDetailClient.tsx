@@ -372,6 +372,7 @@ export default function ModelDetailClient({ modelId }: ModelDetailClientProps) {
               </TabPanel>
 
               <TabPanel>
+              {modelData && modelData.id && (
                 <ModelDeployment
                   model={{
                     id: modelData.id,
@@ -380,7 +381,8 @@ export default function ModelDetailClient({ modelId }: ModelDetailClientProps) {
                     versions: modelData.versions.map((v: any) => v.version),
                   }}
                 />
-              </TabPanel>
+              )}
+                            </TabPanel>
 
               <TabPanel>
                 <PerformanceTab
