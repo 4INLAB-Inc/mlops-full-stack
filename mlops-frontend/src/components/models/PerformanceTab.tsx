@@ -52,7 +52,7 @@ import {
   FiHash,
   FiServer,
 } from 'react-icons/fi'
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ResponsiveContainer,
   RadarChart,
@@ -68,17 +68,20 @@ import {
   Legend,
   Line,
 } from 'recharts'
-
+import axios from 'axios';
 interface PerformanceTabProps {
-  versions: any[]
+  versions: any[];
+  modelId: string;  // Add this line for modelId
 }
 
-const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
-  const [activeVersion, setActiveVersion] = useState(versions[0]?.version || '')
-  const [selectedVersions, setSelectedVersions] = useState<string[]>([versions[0]?.version || ''])
-  const [isRollbackDialogOpen, setIsRollbackDialogOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const toast = useToast()
+const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) => {
+  const [activeVersion, setActiveVersion] = useState(versions[0]?.version || '');
+  const [selectedVersions, setSelectedVersions] = useState<string[]>([versions[0]?.version || '']);
+  const [isRollbackDialogOpen, setIsRollbackDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiVersionData, setApiVersionData] = useState<any>(null);
+  const toast = useToast();
+
 
   // 메모이제이션된 색상 값들
   const colors = useMemo(() => ({
@@ -215,94 +218,114 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
     }
   }), [colors])
 
-  // 메모이제이션된 목업 데이터
-  const mockVersionData = useMemo(() => ({
-    currentVersion: {
-      version: "2.1.0",
-      status: 'deployed',
-      metrics: {
-        accuracy: 0.9856,
-        precision: 0.9823,
-        recall: 0.9789,
-        f1Score: 0.9806,
-        auc: 0.9912,
-        latency: 45,
-        throughput: 120,
-        truePositives: 4892,
-        falsePositives: 108,
-        falseNegatives: 89,
-        trueNegatives: 4911,
-        specificity: 0.9784,
-        mcc: 0.9712,
-        kappa: 0.9623
-      },
-      trainingTime: '185',
-      epochs: 50,
-      batchSize: 32,
-      learningRate: 0.001,
-      optimizer: 'Adam',
-      lossFunction: 'CrossEntropy',
-      trainingHistory: Array.from({ length: 50 }, (_, i) => ({
-        epoch: i + 1,
-        trainAccuracy: 0.7 + (0.28 * (1 - Math.exp(-i/20))),
-        valAccuracy: 0.65 + (0.33 * (1 - Math.exp(-i/18))),
-        trainLoss: 0.8 * Math.exp(-i/15),
-        valLoss: 0.9 * Math.exp(-i/14)
-      })),
-      resources: {
-        cpu: 45,
-        gpu: 78,
-        memory: 4096,
-        disk: 2048
-      }
-    },
-    previousVersion: {
-      version: "2.0.0",
-      metrics: {
-        accuracy: 0.9723,
-        precision: 0.9645,
-        recall: 0.9689,
-        f1Score: 0.9667,
-        auc: 0.9834,
-        latency: 52,
-        throughput: 100,
-        truePositives: 4562,
-        falsePositives: 165,
-        falseNegatives: 146,
-        trueNegatives: 4627,
-        specificity: 0.9654,
-        mcc: 0.9445,
-        kappa: 0.9412
-      },
-      trainingTime: '210',
-      epochs: 45,
-      batchSize: 32,
-      learningRate: 0.001,
-      optimizer: 'Adam',
-      lossFunction: 'CrossEntropy',
-      trainingHistory: Array.from({ length: 45 }, (_, i) => ({
-        epoch: i + 1,
-        trainAccuracy: 0.65 + (0.31 * (1 - Math.exp(-i/22))),
-        valAccuracy: 0.6 + (0.36 * (1 - Math.exp(-i/20))),
-        trainLoss: 0.9 * Math.exp(-i/18),
-        valLoss: 1.0 * Math.exp(-i/16)
-      })),
-      resources: {
-        cpu: 42,
-        gpu: 75,
-        memory: 3840,
-        disk: 1920
-      }
-    }
-  }), [])
+  // // 메모이제이션된 목업 데이터
+  // const mockVersionData = useMemo(() => ({
+  //   currentVersion: {
+  //     version: "2.1.0",
+  //     status: 'deployed',
+  //     metrics: {
+  //       accuracy: 0.9856,
+  //       precision: 0.9823,
+  //       recall: 0.9789,
+  //       f1Score: 0.9806,
+  //       auc: 0.9912,
+  //       latency: 45,
+  //       throughput: 120,
+  //       truePositives: 4892,
+  //       falsePositives: 108,
+  //       falseNegatives: 89,
+  //       trueNegatives: 4911,
+  //       specificity: 0.9784,
+  //       mcc: 0.9712,
+  //       kappa: 0.9623
+  //     },
+  //     trainingTime: '185',
+  //     epochs: 50,
+  //     batchSize: 32,
+  //     learningRate: 0.001,
+  //     optimizer: 'Adam',
+  //     lossFunction: 'CrossEntropy',
+  //     trainingHistory: Array.from({ length: 50 }, (_, i) => ({
+  //       epoch: i + 1,
+  //       trainAccuracy: 0.7 + (0.28 * (1 - Math.exp(-i/20))),
+  //       valAccuracy: 0.65 + (0.33 * (1 - Math.exp(-i/18))),
+  //       trainLoss: 0.8 * Math.exp(-i/15),
+  //       valLoss: 0.9 * Math.exp(-i/14)
+  //     })),
+  //     resources: {
+  //       cpu: 45,
+  //       gpu: 78,
+  //       memory: 4096,
+  //       disk: 2048
+  //     }
+  //   },
+  //   previousVersion: {
+  //     version: "2.0.0",
+  //     metrics: {
+  //       accuracy: 0.9723,
+  //       precision: 0.9645,
+  //       recall: 0.9689,
+  //       f1Score: 0.9667,
+  //       auc: 0.9834,
+  //       latency: 52,
+  //       throughput: 100,
+  //       truePositives: 4562,
+  //       falsePositives: 165,
+  //       falseNegatives: 146,
+  //       trueNegatives: 4627,
+  //       specificity: 0.9654,
+  //       mcc: 0.9445,
+  //       kappa: 0.9412
+  //     },
+  //     trainingTime: '210',
+  //     epochs: 45,
+  //     batchSize: 32,
+  //     learningRate: 0.001,
+  //     optimizer: 'Adam',
+  //     lossFunction: 'CrossEntropy',
+  //     trainingHistory: Array.from({ length: 45 }, (_, i) => ({
+  //       epoch: i + 1,
+  //       trainAccuracy: 0.65 + (0.31 * (1 - Math.exp(-i/22))),
+  //       valAccuracy: 0.6 + (0.36 * (1 - Math.exp(-i/20))),
+  //       trainLoss: 0.9 * Math.exp(-i/18),
+  //       valLoss: 1.0 * Math.exp(-i/16)
+  //     })),
+  //     resources: {
+  //       cpu: 42,
+  //       gpu: 75,
+  //       memory: 3840,
+  //       disk: 1920
+  //     }
+  //   }
+  // }), [])
 
-  // 메모이제이션된 버전 데이터
-  const versionData = useMemo(() => ({
-    currentVersion: mockVersionData.currentVersion,
-    previousVersion: mockVersionData.previousVersion
-  }), [mockVersionData])
+  // // 메모이제이션된 버전 데이터
+  // const versionData = useMemo(() => ({
+  //   currentVersion: mockVersionData.currentVersion,
+  //   previousVersion: mockVersionData.previousVersion
+  // }), [mockVersionData])
 
   // 메모이제이션된 차트 데이터
+  useEffect(() => {
+    const fetchVersionData = async () => {
+      try {
+        const response = await axios.get(`http://192.168.219.52:8686/api/models/versions/${modelId}`);
+        setApiVersionData(response.data);
+      } catch (error) {
+        console.error('Error fetching version data:', error);
+      }
+    };
+    fetchVersionData();
+  }, [modelId]);
+
+  const versionData = useMemo(() => {
+    if (!apiVersionData) return { currentVersion: {}, previousVersion: {} }; // Return empty data if still loading
+    return {
+      currentVersion: apiVersionData.currentVersion,
+      previousVersion: apiVersionData.previousVersion,
+    };
+  }, [apiVersionData]);
+
   const chartData = useMemo(() => {
     if (!versionData.currentVersion) return []
 
@@ -328,10 +351,10 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
 
   // 메모이제이션된 성능 비교 데이터
   const performanceComparisonData = useMemo(() => {
-    if (!versionData.currentVersion) return []
-
+    if (!versionData.currentVersion || !versionData.currentVersion.metrics) return []
+  
     return [
-      { metric: '정확도', 현재: versionData.currentVersion.metrics.accuracy * 100, 이전: versionData.previousVersion?.metrics.accuracy * 100 },
+      { metric: '정확도', 현재: versionData.currentVersion.metrics.accuracy , 이전: versionData.previousVersion?.metrics.accuracy },
       { metric: '정밀도', 현재: versionData.currentVersion.metrics.precision * 100, 이전: versionData.previousVersion?.metrics.precision * 100 },
       { metric: '재현율', 현재: versionData.currentVersion.metrics.recall * 100, 이전: versionData.previousVersion?.metrics.recall * 100 },
       { metric: 'F1 점수', 현재: versionData.currentVersion.metrics.f1Score * 100, 이전: versionData.previousVersion?.metrics.f1Score * 100 },
@@ -429,7 +452,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
             <VStack align="start" spacing={1}>
               <Text {...styles.overview.label}>총 시간</Text>
               <Text {...styles.overview.value}>
-                {versionData.currentVersion?.trainingTime || 0}분
+                {versionData.currentVersion?.trainingTime || 0}
               </Text>
             </VStack>
             <VStack align="start" spacing={1}>
@@ -522,8 +545,8 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
 
             <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
               {metrics.map(metric => {
-                const current = versionData.currentVersion?.metrics[metric.key] || 0
-                const previous = versionData.previousVersion?.metrics[metric.key] || 0
+                const current = versionData.currentVersion?.metrics?.[metric.key] || 0;
+                const previous = versionData.previousVersion?.metrics?.[metric.key] || 0;
                 const diff = current - previous
                 const diffPercentage = previous ? (diff / previous) * 100 : 0
 
@@ -555,7 +578,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
                             ? `${current}ms`
                             : metric.format === 'rps'
                               ? `${current}/s`
-                              : `${(current * 100).toFixed(1)}%`
+                              : `${(current).toFixed(1)}%`
                           }
                         </Heading>
                         {previous > 0 && (
@@ -770,7 +793,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
                 </Text>
                 <HStack spacing={4}>
                   <HStack>
-                    <Box w="3" h="3" bg={colors.orange} borderRadius="full" />
+                    <Box w="3" h="3" bg={useToken("colors", ["orange.500"])[0]} borderRadius="full" />
                     <Text fontSize="sm" color={colors.textColor}>학습</Text>
                   </HStack>
                   <HStack>
@@ -800,7 +823,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
                       tick={{ fill: colors.headingColor, fontSize: 12 }}
                       stroke={chartStyles.grid.stroke}
                       domain={[0, 1]}
-                      tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                      tickFormatter={(value) => `${(value).toFixed(0)}%`}
                       label={{
                         value: '정확도',
                         angle: -90,
@@ -813,7 +836,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
                     />
                     <Tooltip 
                       contentStyle={chartStyles.tooltip}
-                      formatter={(value) => `${(Number(value) * 100).toFixed(1)}%`}
+                      formatter={(value) => `${(Number(value)).toFixed(1)}%`}
                     />
                     <Line
                       type="monotone"
@@ -905,7 +928,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
                           <Stat size="sm">
                             <StatLabel color={colors.textColor}>정확도</StatLabel>
                             <StatNumber fontSize="md">
-                              {(version.metrics.accuracy * 100).toFixed(1)}%
+                              {(version.metrics.accuracy).toFixed(1)}%
                             </StatNumber>
                           </Stat>
                           <Stat size="sm">
@@ -949,12 +972,12 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
                   혼동 행렬
                 </Text>
                 <SimpleGrid columns={2} spacing={4}>
-                  {[
-                    { label: '진양성 (TP)', value: versionData.currentVersion?.metrics.truePositives || 0, prevValue: versionData.previousVersion?.metrics.truePositives || 0 },
-                    { label: '위양성 (FP)', value: versionData.currentVersion?.metrics.falsePositives || 0, prevValue: versionData.previousVersion?.metrics.falsePositives || 0 },
-                    { label: '위음성 (FN)', value: versionData.currentVersion?.metrics.falseNegatives || 0, prevValue: versionData.previousVersion?.metrics.falseNegatives || 0 },
-                    { label: '진음성 (TN)', value: versionData.currentVersion?.metrics.trueNegatives || 0, prevValue: versionData.previousVersion?.metrics.trueNegatives || 0 },
-                  ].map(item => {
+                {[
+                  { label: '진양성 (TP)', value: versionData.currentVersion?.metrics?.truePositives || 0, prevValue: versionData.previousVersion?.metrics?.truePositives || 0 },
+                  { label: '위양성 (FP)', value: versionData.currentVersion?.metrics?.falsePositives || 0, prevValue: versionData.previousVersion?.metrics?.falsePositives || 0 },
+                  { label: '위음성 (FN)', value: versionData.currentVersion?.metrics?.falseNegatives || 0, prevValue: versionData.previousVersion?.metrics?.falseNegatives || 0 },
+                  { label: '진음성 (TN)', value: versionData.currentVersion?.metrics?.trueNegatives || 0, prevValue: versionData.previousVersion?.metrics?.trueNegatives || 0 }
+                ].map(item => {
                     const diff = item.value - item.prevValue;
                     const diffPercentage = (diff / item.prevValue) * 100;
                     return (
@@ -1001,24 +1024,24 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
                   {[
                     { 
                       label: '특이도', 
-                      value: versionData.currentVersion?.metrics.specificity || 0, 
-                      prevValue: versionData.previousVersion?.metrics.specificity || 0, 
+                      value: versionData.currentVersion?.metrics?.specificity || 0, 
+                      prevValue: versionData.previousVersion?.metrics?.specificity || 0, 
                       description: '실제 음성 중 음성으로 예측한 비율입니다. TN / (TN + FP)',
                       formula: 'TN / (TN + FP)',
                       example: '예: 실제 정상인 1000개의 샘플 중 950개를 정상으로 올바르게 분류한 경우 특이도는 95%입니다.'
                     },
                     { 
                       label: 'MCC', 
-                      value: versionData.currentVersion?.metrics.mcc || 0, 
-                      prevValue: versionData.previousVersion?.metrics.mcc || 0, 
+                      value: versionData.currentVersion?.metrics?.mcc || 0, 
+                      prevValue: versionData.previousVersion?.metrics?.mcc || 0, 
                       description: 'Matthews 상관 계수로, -1에서 1 사이의 값을 가지며 1에 가까울수록 좋은 성능을 나타냅니다.',
                       formula: '(TP × TN - FP × FN) / √((TP + FP)(TP + FN)(TN + FP)(TN + FN))',
                       example: '예: MCC가 0.8이면 모델이 양성과 음성 클래스를 모두 잘 분류하고 있음을 의미합니다.'
                     },
                     { 
                       label: 'Kappa', 
-                      value: versionData.currentVersion?.metrics.kappa || 0, 
-                      prevValue: versionData.previousVersion?.metrics.kappa || 0, 
+                      value: versionData.currentVersion?.metrics?.kappa || 0, 
+                      prevValue: versionData.previousVersion?.metrics?.kappa || 0, 
                       description: 'Cohen의 Kappa 계수로, 우연에 의한 정확도를 고려한 지표입니다. -1에서 1 사이의 값을 가집니다.',
                       formula: '(관찰된 일치도 - 기대되는 일치도) / (1 - 기대되는 일치도)',
                       example: '예: Kappa가 0.7이면 우연의 일치를 제외하고도 상당히 좋은 성능을 보이고 있음을 의미합니다.'
@@ -1096,7 +1119,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions }) => {
               </Text>
               <SimpleGrid columns={2} spacing={4}>
                 {[
-                  { label: '학습 시간', value: versionData.currentVersion?.trainingTime || '0', prevValue: versionData.previousVersion?.trainingTime || '0', unit: '분' },
+                  { label: '학습 시간', value: versionData.currentVersion?.trainingTime || '0', prevValue: versionData.previousVersion?.trainingTime || '0', unit: '' },
                   { label: '에포크 수', value: versionData.currentVersion?.epochs || 0, prevValue: versionData.previousVersion?.epochs || 0 },
                   { label: '배치 크기', value: versionData.currentVersion?.batchSize || 0, prevValue: versionData.previousVersion?.batchSize || 0 },
                   { label: '학습률', value: versionData.currentVersion?.learningRate || 0, prevValue: versionData.previousVersion?.learningRate || 0 },

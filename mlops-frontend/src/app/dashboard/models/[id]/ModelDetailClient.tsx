@@ -384,13 +384,19 @@ export default function ModelDetailClient({ modelId }: ModelDetailClientProps) {
               )}
                             </TabPanel>
 
-              <TabPanel>
-                <PerformanceTab
-                  versions={modelData.versions}
-                  selectedVersions={selectedVersions}
-                  setSelectedVersions={setSelectedVersions}
-                />
-              </TabPanel>
+                            <TabPanel>
+                              {modelData ? (
+                                <PerformanceTab
+                                  modelId={modelData.id}
+                                  versions={modelData.versions}
+                                  selectedVersions={selectedVersions}
+                                  setSelectedVersions={setSelectedVersions}
+                                />
+                              ) : (
+                                <Text>Loading...</Text>
+                              )}
+                            </TabPanel>
+
 
               <TabPanel>
                 <Card bg={bgCard}>
