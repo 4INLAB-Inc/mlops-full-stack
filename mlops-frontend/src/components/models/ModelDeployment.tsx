@@ -880,6 +880,65 @@ interface ModelDeploymentProps {
   }
 }
 
+// API 호출 함수들 (목업)
+const createEndpoint = async (modelId: string, config: EndpointConfig): Promise<Endpoint> => {
+  // 2초 딜레이로 비동기 시뮬레이션
+  await new Promise(resolve => setTimeout(resolve, 2000))
+
+  const newEndpoint: Endpoint = {
+    id: `endpoint-${Date.now()}`,
+    name: config.name,
+    status: 'running',
+    url: `https://api.4inlab.kr/models/${modelId}/${config.name}`,
+    version: '1.0.0',
+    createdAt: new Date().toISOString(),
+    resources: {
+      instanceType: config.instanceType,
+      autoScaling: config.autoScaling,
+      minInstances: config.minInstances,
+      maxInstances: config.maxInstances,
+      memoryLimit: config.memoryLimit,
+      timeout: config.timeout
+    },
+    metrics: {
+      requestsPerMinute: 0,
+      averageLatency: 0,
+      errorRate: 0,
+      successRate: 100
+    }
+  }
+
+  mockEndpoints.push(newEndpoint)
+  return newEndpoint
+}
+
+const deleteEndpoint = async (modelId: string, endpointId: string): Promise<void> => {
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  const index = mockEndpoints.findIndex(e => e.id === endpointId)
+  if (index !== -1) {
+    mockEndpoints.splice(index, 1)
+  }
+}
+
+const updateEndpointStatus = async (
+  modelId: string,
+  endpointId: string,
+  action: 'start' | 'stop'
+): Promise<Endpoint> => {
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  const endpoint = mockEndpoints.find(e => e.id === endpointId)
+  if (!endpoint) {
+    throw new Error('엔드포인트를 찾을 수 없습니다.')
+  }
+  endpoint.status = action === 'start' ? 'running' : 'stopped'
+  return endpoint
+}
+
+const getEndpoints = async (modelId: string): Promise<Endpoint[]> => {
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  return mockEndpoints
+}
+
 export const ModelDeployment: React.FC<ModelDeploymentProps> = ({
   model
 }) => {
@@ -953,36 +1012,43 @@ export const ModelDeployment: React.FC<ModelDeploymentProps> = ({
     return () => clearInterval(timer)
   }, [])
 
-  const handleEndpointAction = async (endpoint: Endpoint, action: 'start' | 'stop') => {
-    setIsActionLoading(true)
+    // 엔드포인트 생성
+  const handleCreateEndpoint = async () => {
+    setIsLoading(true)
     try {
-      // TODO: 실제 start/stop 처리 API 연동
+      const newEndpoint = await createEndpoint(modelId, config)
+      setEndpoints(prev => [...prev, newEndpoint])
+      
       toast({
-        title: `엔드포인트 ${action === 'start' ? '시작' : '중지'} 완료`,
-        description: `${endpoint.name} 엔드포인트가 ${action === 'start' ? '시작' : '중지'}되었습니다.`,
+        title: '엔드포인트 생성 완료',
+        description: `${config.name} 엔드포인트가 성공적으로 생성되었습니다.`,
         status: 'success',
         duration: 5000,
         isClosable: true,
       })
-      fetchEndpoints()
+      onClose()
     } catch (error) {
       toast({
-        title: `엔드포인트 ${action === 'start' ? '시작' : '중지'} 실패`,
-        description: '처리 중 오류가 발생했습니다.',
+        title: '엔드포인트 생성 실패',
+        description: error instanceof Error ? error.message : '엔드포인트 생성 중 오류가 발생했습니다.',
         status: 'error',
         duration: 5000,
         isClosable: true,
       })
     } finally {
-      setIsActionLoading(false)
+      setIsLoading(false)
     }
   }
 
+  // 엔드포인트 삭제
   const handleDeleteEndpoint = async () => {
     if (!selectedEndpoint) return
+
     setIsActionLoading(true)
     try {
-      // TODO: delete API 연동
+      await deleteEndpoint(modelId, selectedEndpoint.id)
+      setEndpoints(prev => prev.filter(e => e.id !== selectedEndpoint.id))
+      
       toast({
         title: '엔드포인트 삭제 완료',
         description: `${selectedEndpoint.name} 엔드포인트가 삭제되었습니다.`,
@@ -990,18 +1056,45 @@ export const ModelDeployment: React.FC<ModelDeploymentProps> = ({
         duration: 5000,
         isClosable: true,
       })
-      fetchEndpoints()
+      setIsDeleteDialogOpen(false)
     } catch (error) {
       toast({
         title: '엔드포인트 삭제 실패',
-        description: '삭제 중 오류가 발생했습니다.',
+        description: error instanceof Error ? error.message : '엔드포인트 삭제 중 오류가 발생했습니다.',
         status: 'error',
         duration: 5000,
         isClosable: true,
       })
     } finally {
       setIsActionLoading(false)
-      setIsDeleteDialogOpen(false)
+      setSelectedEndpoint(null)
+    }
+  }
+
+  // 엔드포인트 상태 변경 (시작/중지)
+  const handleEndpointAction = async (endpoint: Endpoint, action: 'start' | 'stop') => {
+    setIsActionLoading(true)
+    try {
+      const updatedEndpoint = await updateEndpointStatus(modelId, endpoint.id, action)
+      setEndpoints(prev => prev.map(e => e.id === endpoint.id ? updatedEndpoint : e))
+      
+      toast({
+        title: `엔드포인트 ${action === 'start' ? '시작' : '중지'} 완료`,
+        description: `${endpoint.name} 엔드포인트가 ${action === 'start' ? '시작' : '중지'}되었습니다.`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      })
+    } catch (error) {
+      toast({
+        title: `엔드포인트 ${action === 'start' ? '시작' : '중지'} 실패`,
+        description: error instanceof Error ? error.message : `엔드포인트 ${action === 'start' ? '시작' : '중지'} 중 오류가 발생했습니다.`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    } finally {
+      setIsActionLoading(false)
     }
   }
 
@@ -1105,6 +1198,137 @@ export const ModelDeployment: React.FC<ModelDeploymentProps> = ({
           </CardBody>
         </Card>
       ))}
+
+       {/* Create Endpoint Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+         <ModalOverlay />
+         <ModalContent bg={colors.bg}>
+           <ModalHeader color={colors.headingColor}>새 엔드포인트 생성</ModalHeader>
+           <ModalCloseButton />
+           <ModalBody>
+             <Stack spacing={6}>
+               <FormControl>
+                 <FormLabel color={colors.textColor}>엔드포인트 이름</FormLabel>
+                <Input
+                  placeholder="production-endpoint"
+                  value={config.name}
+                  onChange={(e) => setConfig({ ...config, name: e.target.value })}
+                  bg={colors.bg}
+                  borderColor={colors.borderColor}
+                  _hover={{ borderColor: colors.orange }}
+                  _focus={{ borderColor: colors.orange, boxShadow: `0 0 0 1px ${colors.orange}` }}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel color={colors.textColor}>인스턴스 타입</FormLabel>
+                <Select
+                  value={config.instanceType}
+                  onChange={(e) => setConfig({ ...config, instanceType: e.target.value })}
+                  bg={colors.bg}
+                  borderColor={colors.borderColor}
+                  _hover={{ borderColor: colors.orange }}
+                  _focus={{ borderColor: colors.orange, boxShadow: `0 0 0 1px ${colors.orange}` }}
+                >
+                  {[
+                    { value: 'cpu.small', label: 'CPU Small (2 vCPU, 4GB RAM)', icon: FiCpu },
+                    { value: 'cpu.medium', label: 'CPU Medium (4 vCPU, 8GB RAM)', icon: FiCpu },
+                    { value: 'cpu.large', label: 'CPU Large (8 vCPU, 16GB RAM)', icon: FiCpu },
+                    { value: 'gpu.small', label: 'GPU Small (1 GPU, 8GB RAM)', icon: FiZap },
+                    { value: 'gpu.medium', label: 'GPU Medium (2 GPU, 16GB RAM)', icon: FiZap },
+                    { value: 'gpu.large', label: 'GPU Large (4 GPU, 32GB RAM)', icon: FiZap },
+                  ].map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl display="flex" alignItems="center">
+                <FormLabel mb="0" color={colors.textColor}>자동 스케일링 활성화</FormLabel>
+                <Switch
+                  colorScheme="orange"
+                  isChecked={config.autoScaling}
+                  onChange={(e) => setConfig({ ...config, autoScaling: e.target.checked })}
+                />
+              </FormControl>
+
+              {config.autoScaling && (
+                <Flex gap={4}>
+                  <FormControl>
+                    <FormLabel color={colors.textColor}>최소 인스턴스</FormLabel>
+                    <Input
+                      type="number"
+                      value={config.minInstances}
+                      onChange={(e) => setConfig({ ...config, minInstances: parseInt(e.target.value) })}
+                      bg={colors.bg}
+                      borderColor={colors.borderColor}
+                      _hover={{ borderColor: colors.orange }}
+                      _focus={{ borderColor: colors.orange, boxShadow: `0 0 0 1px ${colors.orange}` }}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel color={colors.textColor}>최대 인스턴스</FormLabel>
+                    <Input
+                      type="number"
+                      value={config.maxInstances}
+                      onChange={(e) => setConfig({ ...config, maxInstances: parseInt(e.target.value) })}
+                      bg={colors.bg}
+                      borderColor={colors.borderColor}
+                      _hover={{ borderColor: colors.orange }}
+                      _focus={{ borderColor: colors.orange, boxShadow: `0 0 0 1px ${colors.orange}` }}
+                    />
+                  </FormControl>
+                </Flex>
+              )}
+
+              <FormControl>
+                <FormLabel color={colors.textColor}>메모리 제한 (MB)</FormLabel>
+                <Input
+                  type="number"
+                  value={config.memoryLimit}
+                  onChange={(e) => setConfig({ ...config, memoryLimit: parseInt(e.target.value) })}
+                  bg={colors.bg}
+                  borderColor={colors.borderColor}
+                  _hover={{ borderColor: colors.orange }}
+                  _focus={{ borderColor: colors.orange, boxShadow: `0 0 0 1px ${colors.orange}` }}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel color={colors.textColor}>타임아웃 (초)</FormLabel>
+                <Input
+                  type="number"
+                  value={config.timeout}
+                  onChange={(e) => setConfig({ ...config, timeout: parseInt(e.target.value) })}
+                  bg={colors.bg}
+                  borderColor={colors.borderColor}
+                  _hover={{ borderColor: colors.orange }}
+                  _focus={{ borderColor: colors.orange, boxShadow: `0 0 0 1px ${colors.orange}` }}
+                />
+              </FormControl>
+            </Stack>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={onClose}>
+              취소
+            </Button>
+            <Button
+              bg={colors.orange}
+              color="white"
+              leftIcon={<Icon as={FiCloud} />}
+              onClick={handleCreateEndpoint}
+              isLoading={isLoading}
+              _hover={{ bg: '#D45500' }}
+              _active={{ bg: '#C04800' }}
+            >
+              엔드포인트 생성
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* 삭제 다이얼로그 */}
       <AlertDialog isOpen={isDeleteDialogOpen} leastDestructiveRef={null} onClose={() => setIsDeleteDialogOpen(false)}>
