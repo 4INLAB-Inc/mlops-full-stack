@@ -75,8 +75,31 @@ interface PerformanceTabProps {
 }
 
 const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) => {
-  const [activeVersion, setActiveVersion] = useState(versions[0]?.version || '');
-  const [selectedVersions, setSelectedVersions] = useState<string[]>([versions[0]?.version || '']);
+  const sortedVersions = useMemo(() => {
+    return [...versions].sort((a, b) => parseFloat(b.version) - parseFloat(a.version));
+  }, [versions]);
+
+  // const bestAccuracyVersion = useMemo(() => {
+  //   return versions.reduce((best, current) => {
+  //     const bestAcc = best.metrics?.accuracy ?? 0;
+  //     const currentAcc = current.metrics?.accuracy ?? 0;
+  //     return currentAcc > bestAcc ? current : best;
+  //   }, versions[0]);
+  // }, [versions]);
+ 
+  // //Select the first version
+  // const [activeVersion, setActiveVersion] = useState(versions[0]?.version || '');
+  // const [selectedVersions, setSelectedVersions] = useState<string[]>([versions[0]?.version || '']);
+
+  //Select the newest version
+  const [activeVersion, setActiveVersion] = useState(sortedVersions[0]?.version || '');
+  const [selectedVersions, setSelectedVersions] = useState<string[]>([sortedVersions[0]?.version || '']);
+
+  // //Select the best performance (Accurracy) version
+  // const [activeVersion, setActiveVersion] = useState(bestAccuracyVersion?.version || '');
+  // const [selectedVersions, setSelectedVersions] = useState<string[]>([bestAccuracyVersion?.version || '']);
+
+
   const [isRollbackDialogOpen, setIsRollbackDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [apiVersionData, setApiVersionData] = useState<any>(null);
@@ -309,7 +332,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
   useEffect(() => {
     const fetchVersionData = async () => {
       try {
-        const response = await axios.get(`http://192.168.219.52:8686/api/models/versions/${modelId}`);
+        const response = await axios.get(`http://192.168.219.52:8686/api/models/compare/${modelId}`);
         setApiVersionData(response.data);
       } catch (error) {
         console.error('Error fetching version data:', error);
@@ -318,13 +341,34 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
     fetchVersionData();
   }, [modelId]);
 
+  // const versionData = useMemo(() => {
+  //   if (!apiVersionData) return { currentVersion: {}, previousVersion: {} }; // Return empty data if still loading
+  //   return {
+  //     currentVersion: apiVersionData.currentVersion,
+  //     previousVersion: apiVersionData.previousVersion,
+  //   };
+  // }, [apiVersionData]);
   const versionData = useMemo(() => {
-    if (!apiVersionData) return { currentVersion: {}, previousVersion: {} }; // Return empty data if still loading
+    if (!apiVersionData) return { currentVersion: {}, previousVersion: {} };
+  
+    const allVersions = Object.keys(apiVersionData)
+      .filter(key => key.startsWith("version"))
+      .sort((a, b) => {
+        const verA = parseFloat(apiVersionData[a].version);
+        const verB = parseFloat(apiVersionData[b].version);
+        return verA - verB;
+      });
+  
+    const currentIndex = allVersions.findIndex(v => apiVersionData[v].version === activeVersion);
+    const currentKey = allVersions[currentIndex];
+    const previousKey = allVersions[currentIndex - 1];
+  
     return {
-      currentVersion: apiVersionData.currentVersion,
-      previousVersion: apiVersionData.previousVersion,
+      currentVersion: apiVersionData[currentKey],
+      previousVersion: apiVersionData[previousKey] || {},
     };
-  }, [apiVersionData]);
+  }, [apiVersionData, activeVersion]);
+  
 
   const chartData = useMemo(() => {
     if (!versionData.currentVersion) return []
@@ -351,7 +395,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
 
   // 메모이제이션된 성능 비교 데이터
   const performanceComparisonData = useMemo(() => {
-    if (!versionData.currentVersion || !versionData.currentVersion.metrics) return []
+    if (!versionData.currentVersion?.metrics || !versionData.previousVersion?.metrics) return [];
   
     return [
       { metric: '정확도', 현재: versionData.currentVersion.metrics.accuracy , 이전: versionData.previousVersion?.metrics.accuracy },
@@ -519,7 +563,8 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
                   버전 선택
                 </MenuButton>
                 <MenuList>
-                  {versions.map(v => (
+                  {/* {versions.map(v => ( */}
+                  {sortedVersions.map(v => (
                     <MenuItem
                       key={v.version}
                       onClick={() => setActiveVersion(v.version)}
