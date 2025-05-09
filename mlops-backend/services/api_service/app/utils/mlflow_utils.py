@@ -43,6 +43,43 @@ def get_experiment_info(experiment_id: str) -> Dict[str, Any]:
 
     # Get all runs of the experiment
     runs = client.search_runs(experiment_ids=[experiment_id])
+    
+    experiment = client.get_experiment(experiment_id)
+    if experiment is None:
+        return {
+            "id": experiment_id,
+            "name": None,
+            "status": None,
+            "dataset": None,
+            "model": None,
+            "version": None,
+            "framework": None,
+            "metrics": {
+                "accuracy": None,
+                "loss": None
+            },
+            "metrics_history": {
+                "trainAcc": [],
+                "valAcc": [],
+                "trainLoss": [],
+                "valLoss": []
+            },
+            "hyperparameters": {
+                "learningRate": None,
+                "batchSize": None,
+                "epochs": None
+            },
+            "startTime": None,
+            "endTime": None,
+            "createdAt": None,
+            "updatedAt": None,
+            "runtime": None,
+            "timestamp": None,
+            "description": None
+        }
+        
+        
+    
     experiment_name = client.get_experiment(experiment_id).name
     
     # Check if the experiment has any runs

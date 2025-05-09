@@ -24,7 +24,7 @@ dataset:
     ds_name: 피크전력데이터_우림테크 # For Timeseries datasets
     dvc_tag: ['제조', '센서', '실시간']
     dvc_checkout: true
-    file_path: null  # File path for time-series data, default là NONE
+    file_path: /home/ariya/workspace/datasets/timseries/미광금속_피크전력.csv  # File path for time-series data, default là NONE
     # date_col: TransactionDate  # Column containing date information
     # target_col: Stock  # Target column
     # time_step: 30  # Specify the number of time steps
@@ -121,8 +121,8 @@ train:
             dropout: 0.1
             output_size: 1
         mlflow:
-            exp_name: WoolimTech_Peak Prediction Training
-            exp_desc: Train a model for peak power prediction on time-series data for WoolimTech
+            exp_name: Mikwang Peak Prediction Training
+            exp_desc: Train a model for peak power prediction on time-series data for Mikwang
             exp_tags:
                 dataset: Mixed
             
@@ -137,8 +137,8 @@ evaluate:
     timeseries:  # Configuration specific to time-series data
         subset: test
         mlflow:
-            exp_name: WoolimTech_Peak Prediction Evaluation
-            exp_desc: Evaluate a time-series model for peak power prediction for WoolimTech
+            exp_name: Mikwang Peak Prediction Evaluation
+            exp_desc: Evaluate a time-series model for peak power prediction for Mikwang
             exp_tags:
                 dataset: Time Series Data
 

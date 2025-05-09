@@ -38,7 +38,8 @@ origins = [
 # Adding CORS middleware to handle cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Allow specific origins
+    # allow_origins=origins,  # Allow specific origins
+    allow_origin_regex=".*", 
     allow_credentials=True,  # Allow credentials such as cookies
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allow all headers

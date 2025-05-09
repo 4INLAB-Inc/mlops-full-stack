@@ -70,10 +70,10 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 
-RUN mkdir -p /home/ariya/central_storage/datasets && chmod -R 777 /home/ariya/central_storage/datasets
-RUN mkdir -p /service/central_storage && chmod -R 777 /service/central_storage
-RUN chown -R 1000:1000 /home/ariya/central_storage/datasets
-
+# RUN umask 000 && \
+#     chmod -R 777 /home/ariya/central_storage/datasets && chown -R 1000:1000 /home/ariya/central_storage/datasets && \
+#     chmod -R 777 /home/ariya/central_storage/logs && chown -R 1000:1000 /home/ariya/central_storage/logs && \
+#     chmod -R 777 /home/ariya/central_storage/models && chown -R 1000:1000 /home/ariya/central_storage/models
 
 # # Install conda
 # RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-py38_23.3.1-0-Linux-${ARCH}.sh && \
@@ -100,7 +100,19 @@ WORKDIR /service/app
 
 ENV GIT_DISCOVERY_ACROSS_FILESYSTEM=1
 
-CMD umask 000 && chmod -R 777 /home/ariya/central_storage/datasets && chown -R 1000:1000 /home/ariya/central_storage/datasets && gunicorn main:app --workers 8 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${API_SERVICE_PORT} --timeout 120 --max-requests 1000
+# CMD gunicorn main:app --workers 8 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${API_SERVICE_PORT} --timeout 120 --max-requests 1000
+CMD bash -c '\
+  mkdir -p /home/ariya/central_storage/datasets && \
+  mkdir -p /home/ariya/central_storage/logs && \
+  mkdir -p /home/ariya/central_storage/models && \
+  chmod -R 777 /home/ariya/central_storage/{datasets,logs,models} && \
+  chown -R 1000:1000 /home/ariya/central_storage/{datasets,logs,models} && \
+  gunicorn main:app \
+    --workers 8 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 0.0.0.0:${API_SERVICE_PORT} \
+    --timeout 120 \
+    --max-requests 1000'
 
 
 # FROM python:3.9.17-slim

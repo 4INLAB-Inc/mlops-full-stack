@@ -53,8 +53,8 @@ services:
                         - driver: nvidia
                           device_ids: ['all']
                           capabilities: [gpu]
-        shm_size: "20gb"  # Tăng bộ nhớ chia sẻ để tránh lỗi khi load model lớn
-        mem_limit: "48gb"  # Giới hạn container chỉ dùng tối đa 48GB RAM
+        shm_size: "20gb"  # 
+        mem_limit: "48gb"  #
 
     # ML platform / experiment tracking
     mlflow:
