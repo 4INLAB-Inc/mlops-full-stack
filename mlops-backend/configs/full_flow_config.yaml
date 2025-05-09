@@ -67,8 +67,8 @@ model:
             reference_data_n_sample: 1000
 
     timeseries:
-        model_name: peak_prediction_woolim
-        model_type: Conv1D_BiLSTM
+        model_name: peak_prediction_mikwang
+        model_type: BiLSTM
          # Options: LSTM, GRU, BiLSTM, Conv1D_BiLSTM
         sequences: 672  #sequence
         input_num: 1  #number of input variables
@@ -92,7 +92,7 @@ model:
 train:
     image:
         hparams:
-            epochs: 10
+            epochs: 200
             batch_size: 128
             learning_rate: 0.001
             lstm_units: 128  # For time-series models
