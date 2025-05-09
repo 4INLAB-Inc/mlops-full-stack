@@ -11,6 +11,14 @@
 
 ## Overview
 
+### 코드 프로젝트 시행 방법
+```
+   cd mlops-backend
+
+   docker-compose up --build
+
+```
+
 ### Customization Process (모델 추가, Tasks-Flows 수정 등등)
 
 - **Step 1**: MLOps 플랫폼의 Tasks, 예를 들어 데이터 처리 (dataset.py), 모델 학습 구축 (ai_models/), 모델 배포 (deploy.py) 등이 "/task" 폴더에 정의되어 있다.
@@ -132,6 +140,12 @@ MLOps의 플로우는 데이터 처리, 모델 훈련, 평가 및 배포와 같�
 3. **jupyter** (Port: 8888): Provides an interactive notebook for data exploration and model development.
 4. **nginx** (Port: 80): Acts as a reverse proxy and load balancer.
 5. **pgAdmin** (Port: 16543 - user: pgadmin@gmail.com, pw: SuperSecurePwdHere): Access to DB Server
+                **DB 정보보**
+                ```
+                POSTGRES_USER=postgres
+                POSTGRES_PASSWORD=postgres
+                POSTGRES_DB=postgres
+                ```
 6. **prefect server** (Port: 4200): Orchestrates and schedules machine learning task flows.
 7. **postgres** (Port: 5432): Stores metadata for models and experiments.
 8. **web_ui** (Port: 4243): Frontend interface for the system.

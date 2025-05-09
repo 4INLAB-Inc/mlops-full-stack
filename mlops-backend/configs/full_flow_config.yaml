@@ -21,7 +21,7 @@ enabled_tasks:
 data_type: timeseries  # Specify 'image' or 'timeseries'
 
 dataset:
-    ds_name: 피크전력데이터_우림테크 # For Timeseries datasets
+    ds_name: 피크전력데이터_미광금속 # For Timeseries datasets
     dvc_tag: ['제조', '센서', '실시간']
     dvc_checkout: true
     file_path: /home/ariya/workspace/datasets/timseries/미광금속_피크전력.csv  # File path for time-series data, default là NONE
@@ -32,7 +32,7 @@ dataset:
     target_col: ITEM001  # Target column
     sequences: 672
     ds_author: 박진제
-    ds_description: 우림테크에 전체 공장의 전력데이터셋 입니다
+    ds_description: 미광금속에 전체 공장의 전력데이터셋 입니다
 
 
 model:
@@ -144,8 +144,8 @@ evaluate:
 
             
 deploy:
-    model_metadata_file_path: "/home/ariya/central_storage/models/timeseries/peak_prediction_model_ver015_Conv1D_BiLSTM/peak_prediction.yaml"
-    model_version: 12
+    model_metadata_file_path: "/home/ariya/central_storage/models/timeseries/peak_prediction_woolim_model_ver001_Conv1D_BiLSTM/peak_prediction_woolim.yaml"
+    model_version: 2
     # prefect:
     #     git_repo_root: ~/workspace/deployments/prefect-deployments
     #     name: all_flow_deployment

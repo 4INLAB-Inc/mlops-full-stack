@@ -15,15 +15,16 @@ python run_flow.py --config configs/data_flow_config.yaml
 python run_flow.py --config configs/eval_flow_config.yaml
 python run_flow.py --config configs/eval_flow_config.yaml
 
-python run_flow.py --config configs/full_flow_config.yaml --data_flow 1 --train_flow 1 --eval_flow 0 --deploy_flow 1 --model_type Conv1D-BiLSTM --epochs 50
+python run_flow.py --config configs/full_flow_config.yaml --data_flow 1 --train_flow 1 --eval_flow 1 --deploy_flow 1 --model_type Conv1D_BiLSTM --epochs 100
 
-model_type: LSTM, GRU, BiLSTM, Conv1D-BiLSTM
+model_type: LSTM, GRU, BiLSTM, Conv1D_BiLSTM
 
 
 #Run api_flow in jupyer container:
 PS C:\Users\20240805> docker exec -it jupyter bash
 (base) ariya@038ce05b2bfb:~$ cd workspace 
 (base) ariya@038ce05b2bfb:~/workspace$ gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:9992 api_flow:app --timeout 1200
+cd /home/ariya/workspace/ && nvidia-smi --query-gpu=index,name,memory.total,memory.used,memory.free,utilization.gpu --format=csv,noheader,nounits
 
 
 

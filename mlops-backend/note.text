@@ -15,9 +15,9 @@ python run_flow.py --config configs/data_flow_config.yaml
 python run_flow.py --config configs/eval_flow_config.yaml
 python run_flow.py --config configs/eval_flow_config.yaml
 
-python run_flow.py --config configs/full_flow_config.yaml --data_flow 1 --train_flow 1 --eval_flow 1 --deploy_flow 1 --model_type Conv1D-BiLSTM --epochs 100
-
-model_type: LSTM, GRU, BiLSTM, Conv1D-BiLSTM
+python run_flow.py --config configs/full_flow_config.yaml --data_flow 1 --train_flow 1 --eval_flow 1 --deploy_flow 1 --model_type Conv1D_BiLSTM --epochs 100
+python run_flow.py --config configs/full_flow_config.yaml --deploy_flow 1
+model_type: LSTM, GRU, BiLSTM, Conv1D_BiLSTM
 
 
 #Run api_flow in jupyer container:
