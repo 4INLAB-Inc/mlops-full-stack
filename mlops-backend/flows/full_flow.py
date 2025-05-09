@@ -36,20 +36,27 @@ def full_flow(cfg: Dict[str, Any]):
     # Extract model configuration based on the data type ('timeseries' or 'image')
     model_name = cfg["model"].get(data_type, {}).get("model_name", None)
     model_type = cfg["model"].get(data_type, {}).get("model_type", None)
-    model_version = cfg["model"].get(data_type, {}).get("model_version", None)
+    model_version = cfg["deploy"]["model_version"]
+    metadata_file_path=cfg["deploy"]["model_metadata_file_path"]
 
     # Case 1: Full pipeline: data -> train -> eval -> deploy
     if data_pl_action == 1 and train_pl_action == 1 and eval_pl_action == 1 and deploy_pl_action == 1:
         logger.info("Running full pipeline (data -> train -> eval -> deploy).")
-        model_name, model_type, model_version = train_flow(cfg, data_type, dataset_name)
+        model_name, model_type, model_version, metadata_file_path = train_flow(cfg, data_type, dataset_name)
         eval_flow(cfg, data_type, dataset_name, model_name, model_type, model_version)
-        deploy_flow(model_name, model_type, model_version, data_type)
+        deploy_flow(model_name, model_type, model_version, data_type, metadata_file_path)
+        
+    # Case 1: Full pipeline: data -> train -> eval
+    if data_pl_action == 1 and train_pl_action == 1 and eval_pl_action == 1 and deploy_pl_action == 0:
+        logger.info("Running full pipeline (data -> train -> eval).")
+        model_name, model_type, model_version, metadata_file_path = train_flow(cfg, data_type, dataset_name)
+        eval_flow(cfg, data_type, dataset_name, model_name, model_type, model_version)
 
     # Case 2: Selected pipeline: data -> train -> deploy (Skip eval)
     elif data_pl_action == 1 and train_pl_action == 1 and eval_pl_action == 0 and deploy_pl_action == 1:
         logger.info("Running pipeline (data -> train -> deploy).")
-        model_name, model_type, model_version = train_flow(cfg, data_type, dataset_name)
-        deploy_flow(model_name, model_type, model_version, data_type)
+        model_name, model_type, model_version, metadata_file_path = train_flow(cfg, data_type, dataset_name)
+        deploy_flow(model_name, model_type, model_version, data_type, metadata_file_path)
 
     # Case 3: Selected pipeline: data -> train (No eval, No deploy)
     elif data_pl_action == 1 and train_pl_action == 1 and eval_pl_action == 0 and deploy_pl_action == 0:
@@ -65,26 +72,26 @@ def full_flow(cfg: Dict[str, Any]):
     elif data_pl_action == 1 and train_pl_action == 0 and eval_pl_action == 1 and deploy_pl_action == 1:
         logger.info("Running pipeline (data -> eval -> deploy).")
         model_name, model_type, model_version = eval_flow(cfg, data_type, dataset_name, model_name, model_type, model_version)
-        deploy_flow(model_name, model_type, model_version, data_type)
+        deploy_flow(model_name, model_type, model_version, data_type, metadata_file_path)
         
     # Case 6: Selected pipeline: train -> eval -> deploy (Skip data)
     elif data_pl_action == 0 and train_pl_action == 1 and eval_pl_action == 1 and deploy_pl_action == 1:
         logger.info("Running pipeline (train -> eval -> deploy).")
-        model_name, model_type, model_version = train_flow(cfg, data_type, dataset_name)
+        model_name, model_type, model_version, metadata_file_path = train_flow(cfg, data_type, dataset_name)
         eval_flow(cfg, data_type, dataset_name, model_name, model_type, model_version)
-        deploy_flow(model_name, model_type, model_version, data_type)
+        deploy_flow(model_name, model_type, model_version, data_type, metadata_file_path)
         
     # Case 7: Selected pipeline: train -> eval (Skip data and eval)
     elif data_pl_action == 0 and train_pl_action == 1 and eval_pl_action == 1 and deploy_pl_action == 0:
         logger.info("Running pipeline (train -> eval).")
-        model_name, model_type, model_version = train_flow(cfg, data_type, dataset_name)
+        model_name, model_type, model_version, metadata_file_path = train_flow(cfg, data_type, dataset_name)
         eval_flow(cfg, data_type, dataset_name, model_name, model_type, model_version)
 
     # Case 8: Selected pipeline: train -> deploy (Skip eval and data)
     elif data_pl_action == 0 and train_pl_action == 1 and eval_pl_action == 0 and deploy_pl_action == 1:
         logger.info("Running pipeline (train -> deploy).")
-        model_name, model_type, model_version = train_flow(cfg, data_type, dataset_name)
-        deploy_flow(model_name, model_type, model_version, data_type)
+        model_name, model_type, model_version, metadata_file_path = train_flow(cfg, data_type, dataset_name)
+        deploy_flow(model_name, model_type, model_version, data_type, metadata_file_path)
 
     # Case 9: Selected pipeline: train only (No data, No eval, No deploy)
     elif data_pl_action == 0 and train_pl_action == 1 and eval_pl_action == 0 and deploy_pl_action == 0:
@@ -100,7 +107,7 @@ def full_flow(cfg: Dict[str, Any]):
     elif data_pl_action == 0 and train_pl_action == 0 and eval_pl_action == 0 and deploy_pl_action == 1:
         logger.info("Running pipeline (deploy).")
         logger.info(f"Model name before deploy: {model_name}")
-        deploy_flow(model_name, model_type, model_version, data_type)
+        deploy_flow(model_name, model_type, model_version, data_type, metadata_file_path)
 
 # Entry point to start the full pipeline flow
 def start(cfg):

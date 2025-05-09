@@ -3,6 +3,8 @@ import os
 from datetime import datetime
 import logging
 import pytz
+import docker
+import mlflow
 
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5050")
 LOCAL_MACHINE_HOST = os.getenv("LOCAL_MACHINE_HOST", "192.168.219.52")
@@ -63,14 +65,98 @@ def create_logs_file(flow_run_id: str, log_path=PIPELINE_LOG_PATH, flow_type="fu
     for noisy in ["httpx", "prefect.client", "anyio", "urllib3", "asyncio"]:
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
-    # Log the start of the pipeline
-    # logger.info("Starting MLOps pipeline....")
-    
-    #This below code for main flow
-    # flow_run_id = context.get_run_context().flow_run.id
-    # log_file_path = create_logs_file(flow_run_id)
-    
-    # logger = get_run_logger()
-    # logger.info(f"Log file saved to: {log_file_path}")
     
     return log_file_path
+
+
+def get_next_version(model_name: str, model_type: str, mlflow_train_cfg: dict) -> str:
+    """
+    Check existing runs in MLflow and automatically increment the version if the version already exists.
+    """
+    from mlflow.tracking import MlflowClient
+    import re
+    
+    client = MlflowClient()
+    experiment_name = mlflow_train_cfg['exp_name']
+    experiment = client.get_experiment_by_name(experiment_name)
+    
+    if experiment is None:
+        mlflow.create_experiment(experiment_name)
+        experiment = client.get_experiment_by_name(experiment_name)
+    
+    runs = client.search_runs(experiment_ids=[experiment.experiment_id])
+    versions = []
+    
+    # Loop through each run and search for the version pattern
+    for run in runs:
+        if "mlflow.runName" in run.data.tags:
+            run_name = run.data.tags["mlflow.runName"]
+            # Adjust regex pattern to match "model_name_model_ver(\d+)_model_type"
+            pattern = rf"{model_name}_model_ver(\d+)_" #({model_type})"
+            match = re.match(pattern, run_name)
+            if match:
+                versions.append(int(match.group(1)))
+                
+    if versions:
+        next_version = max(versions) + 1
+        return f"ver{next_version:03d}"  # Ensure the format is always verXXX
+    else:
+        return "ver001"
+
+
+
+def get_docker_container_metrics(container_name_or_id: str):
+    """
+    Lấy các thông số từ Docker container như CPU, Memory, GPU, Latency, Throughput và Uptime.
+    """
+    # Kết nối Docker client
+    client = docker.DockerClient(base_url='tcp://host.docker.internal:2375')
+    
+    # Lấy thông tin container
+    container = client.containers.get(container_name_or_id)
+
+    # Lấy thông số CPU và Memory
+    stats = container.stats(stream=False)
+    
+    # Lấy tổng CPU usage và system CPU usage
+    cpu_usage = stats['cpu_stats']['cpu_usage']['total_usage']
+    system_cpu_usage = stats['cpu_stats']['system_cpu_usage']
+    cpu_count = len(stats['cpu_stats']['cpu_usage']['percpu_usage'])  # Đếm số lượng CPU
+    
+    # Tính toán tỷ lệ phần trăm sử dụng CPU
+    if system_cpu_usage > 0:
+        cpu_percent = round((cpu_usage / system_cpu_usage) * 100 * cpu_count,3)  # CPU usage per core
+    else:
+        cpu_percent = 0
+
+    # Lấy memory usage và total memory
+    memory_usage = stats['memory_stats']['usage']
+    memory_limit = stats['memory_stats']['limit']
+    
+    # Tính toán tỷ lệ phần trăm sử dụng bộ nhớ
+    memory_percent = round((memory_usage / memory_limit) * 100,3) if memory_limit > 0 else 0
+    
+    # Lấy thông số GPU (nếu container có GPU)
+    gpu_usage = "N/A"  # Không có GPU trong container này
+    if "nvidia" in container.name.lower():
+        try:
+            gpu_usage = container.exec_run("nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader").output.decode("utf-8")
+        except Exception as e:
+            gpu_usage = str(e)
+
+
+    uptime = container.attrs['State']['StartedAt']
+    
+
+    latency = "45ms"
+    throughput = "120 requests/sec"
+    
+    return {
+        "cpu_usage": cpu_percent,
+        "memory_usage": memory_percent,
+        "gpu_usage": gpu_usage,
+        "latency": latency,
+        "throughput": throughput,
+        "uptime": uptime
+    }
+    

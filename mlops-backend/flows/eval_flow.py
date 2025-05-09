@@ -4,21 +4,17 @@ import mlflow
 import pandas as pd
 import pickle
 import numpy as np
-from tasks.ai_models.image_model import evaluate_model, load_saved_model
-from tasks.ai_models.timeseries_models import evaluate_timeseries_model, load_timeseries_model
-from tasks.dataset import (
-    prepare_dataset,
-    load_time_series_data,
-    prepare_time_series_data,
-    split_time_series_data
-)
+from tasks.timeseries.eval.eval_model import evaluate_timeseries_model
+from tasks.timeseries.utils.model_io import load_timeseries_model
+from tasks.timeseries.utils.model_loader import build_model_by_type
+
 from flows.utils import log_mlflow_info, build_and_log_mlflow_url, create_logs_file
 from prefect import flow, get_run_logger, context
 from prefect.artifacts import create_link_artifact
 from typing import Dict, Any
 from mlflow.tracking import MlflowClient
-import re
-from datetime import timedelta, datetime
+from datetime import datetime
+import torch
 
 CENTRAL_STORAGE_PATH = os.getenv("CENTRAL_STORAGE_PATH", "/home/ariya/central_storage")
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5050")
@@ -26,221 +22,143 @@ mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 DVC_DATA_STORAGE = os.getenv("DVC_DATA_STORAGE", "/home/ariya/central_storage/datasets/")
 MODEL_STORAGE_PATH = os.getenv("MODEL_STORAGE_PATH", "/home/ariya/central_storage/models/")
 
-# @flow(name="eval_flow")
-# def eval_flow(cfg: Dict[str, Any], dvc_ds_root: str, model_dir: str, model_metadata_file_path: str, run_name: str, model_type: str):
-#     logger = get_run_logger()
-#     data_type = cfg['evaluate']['data_type']  # Retrieve the data type
-#     eval_cfg = cfg['evaluate'][data_type]  # Choose configuration based on data type
-#     mlflow_eval_cfg = eval_cfg['mlflow']
-
-#     logger.info('Preparing model for evaluation...')
-#     logger.info(f"Model dir: {model_dir}")
-    
-#     ds_versions_dir = os.path.join(dvc_ds_root, "versions")
-#     ds_version_folders=[f for f in os.listdir(ds_versions_dir) if os.path.isdir(os.path.join(ds_versions_dir, f))]
-#     ds_version_folders.sort(reverse=True)
-#     latest_version_folder = ds_version_folders[0] if ds_version_folders else None
-#     latest_ds_version_path = os.path.join(ds_versions_dir, latest_version_folder) if latest_version_folder else None
-
-#     # Load the model based on the data type
-#     if data_type == 'image':
-#         trained_model = load_saved_model(model_dir)
-#         model_cfg = None  # Metadata not required for image models
-#     elif data_type == 'timeseries':
-#         trained_model = load_timeseries_model(model_dir)
-#     else:
-#         raise ValueError(f"Unsupported data type: {data_type}")
-
-#     # Ensure that model_cfg is loaded for time-series
-#     with open(model_metadata_file_path, 'r') as f:
-#         model_cfg = yaml.safe_load(f)
-
-#     mlflow.set_experiment(mlflow_eval_cfg['exp_name'])
-#     if mlflow.active_run():
-#         logger.warning("An active MLflow run detected. Ending the current run.")
-#         mlflow.end_run()
-
-#     with mlflow.start_run(run_name=run_name, description=mlflow_eval_cfg['exp_desc']) as eval_run:
-#         log_mlflow_info(logger, eval_run)
-
-#         if data_type == 'image':
-#             # Configuration specific to image models
-#             input_shape = (model_cfg['input_size']['h'], model_cfg['input_size']['w'])
-#             ds_repo_path, annotation_df = prepare_dataset(
-#                 ds_root=cfg['dataset']['ds_root'], 
-#                 ds_name=cfg['dataset']['ds_name'], 
-#                 dvc_tag=cfg['dataset']['dvc_tag'], 
-#                 dvc_checkout=cfg['dataset']['dvc_checkout']
-#             )
-#             evaluate_model(trained_model, model_cfg['classes'], ds_repo_path, annotation_df,
-#                            subset=eval_cfg['subset'], img_size=input_shape, classifier_type=model_cfg['classifier_type'])
-
-#         elif data_type == 'timeseries':
-#             X_test = np.load(os.path.join(latest_ds_version_path, "X_test.npy"))
-#             y_test = np.load(os.path.join(latest_ds_version_path, "y_test.npy"))
-            
-#             # Load scaler if needed
-#             scaler_path = os.path.join(latest_ds_version_path, "scaler.pkl")
-#             with open(scaler_path, 'rb') as f:
-#                 scaler = pickle.load(f)
-
-#             # # Save dataset info log as artifact
-#             # dataset_info_path = os.path.join(model_dir, "dataset_info.json")
-#             # mlflow.log_artifact(dataset_info_path, artifact_path="datasets")
-
-#             # Call evaluate_timeseries_model inside the active MLflow run
-#             mse, mae, mape = evaluate_timeseries_model(
-#                 model=trained_model, 
-#                 X_test=X_test, 
-#                 y_test=y_test, 
-#                 scaler=scaler
-#             )
-#             logger.info(f"Evaluation metrics - MSE: {mse}, MAE: {mae}")
-
-#             # Log evaluation metrics to MLflow
-#             mlflow.log_metric("mse", mse)
-#             mlflow.log_metric("mae", mae)
-#             mlflow.log_metric("mape", mape)
-        
-#         eval_run_url = build_and_log_mlflow_url(logger, eval_run)
-#         # mlflow.set_tags(tags=mlflow_eval_cfg['exp_tags'])
-#         # Gắn thẻ metadata vào MLflow
-#         tags_exp = {
-#             "model_type": model_type,
-#             "framework": "TensorFlow",
-#             "status": "deployed",
-#             "accuracy": round(100*(1-mape),1),
-#             "dataset": model_cfg.get("dataset_name", "Stock_product_01"),
-#             "final_loss": mse,
-#             "createdAt": datetime.now().strftime('%Y-%m-%d'),
-#             "updatedAt": datetime.now().strftime('%Y-%m-%d'),
-#         }
-        
-#         mlflow.set_tags(tags=tags_exp)
-#         mlflow.log_artifact(model_metadata_file_path)
-
-#     create_link_artifact(
-#         key='mlflow-evaluate-run',
-#         link=eval_run_url,
-#         description="Link to MLflow's evaluation run"
-#     )
-
-
-# def eval_flow(cfg: Dict[str, Any], dvc_ds_root: str, model_dir: str, model_metadata_file_path: str, run_name: str, model_type: str):
-# def start(cfg):
-#     eval_cfg = cfg['evaluate']
-#     eval_flow(
-#         cfg=cfg,
-#         dvc_ds_root=cfg['dataset']['dvc_data_dir'],
-#         model_dir=eval_cfg['timeseries']['model_dir'],
-#         model_metadata_file_path=eval_cfg['timeseries']['model_metadata_file_path'],
-#         run_name=eval_cfg['run_name'],
-#         model_type=eval_cfg['timeseries']['model_type'],
-#     )
-
-
-DVC_DATA_STORAGE = os.getenv("DVC_DATA_STORAGE", "/home/ariya/central_storage/datasets/")
-MODEL_STORAGE_PATH = os.getenv("MODEL_STORAGE_PATH", "/home/ariya/central_storage/models/")
-
 @flow(name="evaluation_flow")
-def eval_flow(cfg: Dict[str, Any], data_type: str, dataset_name:str, model_name:str, model_type:str, model_version: int):
+def eval_flow(cfg: Dict[str, Any], data_type: str, dataset_name: str, model_name: str, model_type: str, model_version: int):
     client = MlflowClient()
-    
     flow_run_id = context.get_run_context().flow_run.id
-    log_file_path = create_logs_file(flow_run_id,flow_type="eval_flow")
-    
+    log_file_path = create_logs_file(flow_run_id, flow_type="eval_flow")
+
     logger = get_run_logger()
     logger.info("Starting evaluation flow....")
     logger.info(f"Log file saved to: {log_file_path}")
-    
-    logger = get_run_logger()
-    
-    registered_models = client.search_registered_models()
-    model_found = any(model.name == model_type for model in registered_models)
-    # model_version=int(model_version)
-    if not model_found:
-        raise ValueError(f"🚨 Model '{model_type}' not found in registered models!")
 
-    model_versions = client.search_model_versions(f"name = '{model_type}'")
+    registered_models = client.search_registered_models()
+    
+    model_name_with_suffix = f'{model_name}_model'
+    
+    model_found = any(model.name == model_name_with_suffix for model in registered_models)
+    if not model_found:
+        raise ValueError(f"🚨 Model '{model_name_with_suffix}' not found in registered models!")
+
+    model_versions = client.search_model_versions(f"name = '{model_name_with_suffix}'")
     if model_version is None:
-        # If model_version is not provided, get the latest version
         if not model_versions:
-            raise ValueError(f"🚨 No versions found for model '{model_type}'!")
+            raise ValueError(f"🚨 No versions found for model '{model_name_with_suffix}'!")
         select_model_version = max(model_versions, key=lambda v: int(v.version))
     else:
-        # If model_version is provided, find the specific model version
-        select_model_version = next(
-            (v for v in model_versions if int(v.version) == model_version), None
-        )
+        select_model_version = next((v for v in model_versions if int(v.version) == model_version), None)
 
     if select_model_version is None:
         raise ValueError(f"🚨 Model version {model_version} not found for model '{model_type}'!")
-    
-    
-    run_id = select_model_version.run_id
 
+    run_id = select_model_version.run_id
     run_info = client.get_run(run_id)
     run_name = run_info.info.run_name
-    
-
     model_source = os.path.join(MODEL_STORAGE_PATH, data_type, run_name)
+
     if not os.path.exists(model_source):
         raise FileNotFoundError(f"🚨 Model not found at {model_source}")
 
     print(f"✅ Latest model source path: {model_source}")
 
-
-    # Load model metadata from artifacts
-    metadata_file_name=f"{model_name}.yaml"
+    metadata_file_name = f"{model_name}.yaml"
     model_metadata_file_path = os.path.join(model_source, metadata_file_name)
     if not os.path.exists(model_metadata_file_path):
         raise FileNotFoundError(f"🚨 Metadata file not found at {model_metadata_file_path}")
 
-    # with open(model_metadata_file_path, "r") as f:
-    #     model_cfg = yaml.safe_load(f)
-
-
-    # Load model
-    if data_type == "image":
-        trained_model = load_saved_model(model_source)
-    elif data_type == "timeseries":
-        trained_model = load_timeseries_model(model_source)
+    with open(model_metadata_file_path, "r") as f:
+        model_cfg = yaml.safe_load(f)
+        
+    if model_type=="Transformer":
+        framework = "pytorch"
     else:
-        raise ValueError(f"Unsupported data type: {data_type}")
+        framework = "tensorflow"
+    framework = framework.strip().lower()
     
-    # 📌 Tìm folder dataset trong DVC_DATA_STORAGE
-    dataset_path = os.path.join(DVC_DATA_STORAGE, dataset_name)
-    versions_path = os.path.join(dataset_path, "versions")
-
-    if not os.path.exists(versions_path):
-        raise FileNotFoundError(f"🚨 Dataset versions folder not found: {versions_path}")
-
-    # 📌 Lấy danh sách phiên bản và chọn version lớn nhất
-    version_folders = [f for f in os.listdir(versions_path) if os.path.isdir(os.path.join(versions_path, f))]
     
-    if not version_folders:
-        raise FileNotFoundError("🚨 No dataset versions found in DVC storage!")
+    dataset_path = os.path.join(DVC_DATA_STORAGE, dataset_name, "versions")
+    if not os.path.exists(dataset_path):
+        raise FileNotFoundError(f"🚨 Dataset versions folder not found: {dataset_path}")
 
-    # Sắp xếp các phiên bản theo giá trị số (ví dụ: 1.0.1, 1.0.2, ..., 1.0.11)
-    version_folders.sort(key=lambda v: [int(x) for x in v.split('.')], reverse=True)
-    
+    version_folders = [f for f in os.listdir(dataset_path) if os.path.isdir(os.path.join(dataset_path, f))]
+    version_folders = [v for v in version_folders if len(v.split(".")) == 3 and all(part.isdigit() for part in v.split("."))]
+    version_folders.sort(key=lambda v: list(map(int, v.split("."))), reverse=True)
+
     latest_version_folder = version_folders[0]
-    latest_ds_version_path = os.path.join(versions_path, latest_version_folder)
-
+    latest_ds_version_path = os.path.join(dataset_path, latest_version_folder)
     logger.info(f"✅ Using dataset version: {latest_version_folder} at {latest_ds_version_path}")
 
-    # 📌 Load test dataset
     if data_type == "timeseries":
+        # Load test data
         X_test = np.load(os.path.join(latest_ds_version_path, "X_test.npy"))
         y_test = np.load(os.path.join(latest_ds_version_path, "y_test.npy"))
-
-        # Load scaler if needed
         scaler_path = os.path.join(latest_ds_version_path, "scaler.pkl")
         with open(scaler_path, "rb") as f:
             scaler = pickle.load(f)
 
-    # 📌 Bắt đầu Evaluation với MLflow
-    mlflow_exp_name=cfg["evaluate"]["timeseries"]["mlflow"]["exp_name"]
+        hparams = model_cfg.get("hparams", {}).copy()
+        for k in ["batch_size", "epochs"]:
+            hparams.pop(k, None)
+
+        if framework == "pytorch":
+            # ✅ PyTorch input shape: feature dimension only
+            if model_cfg.get("input_size"):
+                input_size_cfg = model_cfg["input_size"]
+                input_size = input_size_cfg["w"] if isinstance(input_size_cfg, dict) else input_size_cfg
+            else:
+                input_size = X_test.shape[2] if len(X_test.shape) == 3 else 1
+
+            model_instance = build_model_by_type(
+                model_type=model_type,
+                input_shape=input_size,
+                **hparams
+            )
+
+        else:  # TensorFlow
+            # ✅ TensorFlow expects (sequences, features)
+            if model_cfg.get("input_size"):
+                input_size_cfg = model_cfg["input_size"]
+                if isinstance(input_size_cfg, dict):
+                    sequences = input_size_cfg.get("sequences", X_test.shape[1])
+                    num_features = input_size_cfg.get("input_num", 1)
+                else:
+                    sequences = X_test.shape[1]
+                    num_features = input_size_cfg
+            else:
+                if len(X_test.shape) == 3:
+                    sequences, num_features = X_test.shape[1], X_test.shape[2]
+                elif len(X_test.shape) == 2:
+                    sequences = X_test.shape[1]
+                    num_features = 1
+                    X_test = X_test[..., np.newaxis]
+                elif len(X_test.shape) == 1:
+                    sequences, num_features = 1, 1
+                    X_test = X_test.reshape(-1, 1, 1)
+                else:
+                    raise ValueError(f"Unsupported shape for X_test: {X_test.shape}")
+
+            input_shape = (sequences, num_features)
+
+            model_instance = build_model_by_type(
+                model_type=model_type,
+                input_shape=input_shape,
+                **hparams
+            )
+
+        # ✅ Load weights vào model instance
+        trained_model = load_timeseries_model(
+            model_path=model_source,
+            framework=framework,
+            model_instance=model_instance
+        )
+    else:
+        raise ValueError(f"Unsupported data type: {data_type}")
+
+    
+
+    
+
+    mlflow_exp_name = cfg["evaluate"]["timeseries"]["mlflow"]["exp_name"]
     mlflow.set_experiment(mlflow_exp_name)
     if mlflow.active_run():
         logger.warning("An active MLflow run detected. Ending the current run.")
@@ -249,28 +167,27 @@ def eval_flow(cfg: Dict[str, Any], data_type: str, dataset_name:str, model_name:
     with mlflow.start_run(run_name=run_name, description="Evaluation for latest model version") as eval_run:
         log_mlflow_info(logger, eval_run)
 
-        if data_type == "timeseries":
-            mse, mae, smape_eval = evaluate_timeseries_model(
-                model=trained_model, 
-                X_test=X_test, 
-                y_test=y_test, 
-                scaler=scaler
-            )
-            logger.info(f"📊 Evaluation metrics - MSE: {mse}, MAE: {mae}")
+        mse, mae, smape_eval = evaluate_timeseries_model(
+            model=trained_model,
+            X_test=X_test,
+            y_test=y_test,
+            scaler=scaler,
+            framework=framework
+        )
 
-            # Log evaluation metrics to MLflow
-            mlflow.log_metric("mse", mse)
-            mlflow.log_metric("mae", mae)
-            mlflow.log_metric("mape", smape_eval)
+        logger.info(f"📊 Evaluation metrics - MSE: {mse}, MAE: {mae}, SMAPE: {smape_eval:.2f}")
+
+        mlflow.log_metric("mse", mse)
+        mlflow.log_metric("mae", mae)
+        mlflow.log_metric("smape", smape_eval)
 
         eval_run_url = build_and_log_mlflow_url(logger, eval_run)
 
-        # Gắn metadata lên MLflow
         mlflow.set_tags({
             "model_type": model_type,
             "log_file": log_file_path,
             "train_run_name": run_name,
-            "framework": "TensorFlow",
+            "framework": framework,
             "status": "deployed",
             "accuracy": round(100 - smape_eval, 1),
             "dataset": dataset_name,
@@ -290,10 +207,9 @@ def eval_flow(cfg: Dict[str, Any], data_type: str, dataset_name:str, model_name:
     logger.info(f"🎯 Evaluation completed! Check MLflow logs: {eval_run_url}")
     return model_name, model_type, model_version
 
-
 def start(cfg):
     model_cfg = cfg['model']
-    data_type=cfg['data_type']
+    data_type = cfg['data_type']
     eval_flow(
         cfg=cfg,
         data_type=data_type,
@@ -302,5 +218,3 @@ def start(cfg):
         model_type=model_cfg[data_type]['model_type'],
         model_version=model_cfg[data_type]['model_version'],
     )
-
-    

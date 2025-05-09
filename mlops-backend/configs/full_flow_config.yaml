@@ -6,21 +6,33 @@ pipeline:
     eval_flow: 0
     deploy_flow: 0
 
+enabled_tasks:
+    data_flow:
+        collect: 1
+        validate: 1
+        feature_engineer: 1
+        split: 1
+    train_flow:
+    eval_flow:
+    deploy_flow:
+        version: 1
+        deploy: 1
+        monitoring: 1
 data_type: timeseries  # Specify 'image' or 'timeseries'
 
 dataset:
-    ds_name: Peak_power_data_1 # For Timeseries datasets
+    ds_name: 피크전력데이터_우림테크 # For Timeseries datasets
     dvc_tag: ['제조', '센서', '실시간']
     dvc_checkout: true
-    file_path: /home/ariya/workspace/datasets/timeseries/62441-AR000_재고량.xlsx   # File path for time-series data
+    file_path: null  # File path for time-series data, default là NONE
     # date_col: TransactionDate  # Column containing date information
     # target_col: Stock  # Target column
     # time_step: 30  # Specify the number of time steps
     date_col: Date  # Column containing date information
     target_col: ITEM001  # Target column
-    time_step: 672  
+    sequences: 672
     ds_author: 박진제
-    ds_description: Stock amount of product ....
+    ds_description: 우림테크에 전체 공장의 전력데이터셋 입니다
 
 
 model:
@@ -55,10 +67,12 @@ model:
             reference_data_n_sample: 1000
 
     timeseries:
-        model_name: peak_prediction
-        model_version: 72
-        model_type: Conv1D-BiLSTM # Options: LSTM, GRU, BiLSTM, Conv1D-BiLSTM
-        time_step: 672  
+        model_name: peak_prediction_woolim
+        model_type: Conv1D_BiLSTM
+         # Options: LSTM, GRU, BiLSTM, Conv1D_BiLSTM
+        sequences: 672  #sequence
+        input_num: 1  #number of input variables
+        output_num: 1 #number of output variables
         input_size:
             h: 672
             w: 1
@@ -79,10 +93,10 @@ train:
     image:
         hparams:
             epochs: 10
-            batchSize: 128
-            learningRate: 0.001
+            batch_size: 128
+            learning_rate: 0.001
             lstm_units: 128  # For time-series models
-            conv_filters: 128  # For Conv1D-BiLSTM models
+            conv_filters: 128  # For Conv1D_BiLSTM models
             kernel_size: 3
             dropout_rate: 0.2
         mlflow:
@@ -92,16 +106,23 @@ train:
                 dataset: Mixed
     timeseries:
         hparams:
-            epochs: 10
+            epochs: 100
             batch_size: 128
-            learningRate: 0.001
+            learning_rate: 0.001
             lstm_units: 128  # For time-series models
-            conv_filters: 128  # For Conv1D-BiLSTM models
+            conv_filters: 128  # For Conv1D_BiLSTM models
             kernel_size: 3
             dropout_rate: 0.2
+        transformer_hparams:  # ✅ Chỉ dùng khi model_type == Transformer
+            d_model: 64
+            nhead: 4
+            num_layers: 2
+            dim_feedforward: 128
+            dropout: 0.1
+            output_size: 1
         mlflow:
-            exp_name: Time Series Peak Prediction Training
-            exp_desc: Train a model for peak power prediction on time-series data
+            exp_name: WoolimTech_Peak Prediction Training
+            exp_desc: Train a model for peak power prediction on time-series data for WoolimTech
             exp_tags:
                 dataset: Mixed
             
@@ -116,13 +137,15 @@ evaluate:
     timeseries:  # Configuration specific to time-series data
         subset: test
         mlflow:
-            exp_name: Time Series Peak Prediction Evaluation
-            exp_desc: Evaluate a time-series model for peak power prediction
+            exp_name: WoolimTech_Peak Prediction Evaluation
+            exp_desc: Evaluate a time-series model for peak power prediction for WoolimTech
             exp_tags:
                 dataset: Time Series Data
 
             
 deploy:
+    model_metadata_file_path: "/home/ariya/central_storage/models/timeseries/peak_prediction_model_ver015_Conv1D_BiLSTM/peak_prediction.yaml"
+    model_version: 12
     # prefect:
     #     git_repo_root: ~/workspace/deployments/prefect-deployments
     #     name: all_flow_deployment
