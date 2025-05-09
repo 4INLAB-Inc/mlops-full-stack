@@ -14,7 +14,8 @@ from pydantic import BaseModel
 from typing import Dict
 from utils import (GradCAM, tf_load_model, array_to_encoded_str, process_heatmap, 
                    prepare_db, load_drift_detectors, commit_results_to_db, 
-                   commit_only_api_log_to_db, check_db_healthy)
+                   commit_only_api_log_to_db, check_db_healthy,
+                   load_model_from_metadata)
 from typing import List
 from sklearn.preprocessing import MinMaxScaler
 
@@ -72,7 +73,8 @@ def update_model(request: Request, model_metadata_file_path: str, run_name: str,
     logger.info('Updating model')
     try:
         # prepare drift detectors along with the model here
-        model, model_meta = tf_load_model(model_metadata_file_path, run_name)
+        # model, model_meta = tf_load_model(model_metadata_file_path, run_name)
+        model, model_meta = load_model_from_metadata(model_metadata_file_path, run_name)
         # model, model_meta = tf_load_model('')
         # uae, bbsd = load_drift_detectors(model_metadata_file_path)
     except Exception as e:

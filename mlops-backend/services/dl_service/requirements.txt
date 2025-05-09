@@ -13,3 +13,5 @@ python-multipart==0.0.6
 SQLAlchemy==1.4.49
 psycopg2-binary==2.9.7
 scikit-learn==0.24.2
+torch==2.0.1
+torchvision==0.15.2

@@ -17,11 +17,15 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 WORKDIR /service
 
-COPY requirements.txt .
+COPY services/dl_service/requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY app/ app/
+COPY services/dl_service/app/ app/
+COPY tasks/ tasks/ 
+COPY models/ models/ 
+
+ENV PYTHONPATH=/service
 
 EXPOSE $DL_SERVICE_PORT
 
