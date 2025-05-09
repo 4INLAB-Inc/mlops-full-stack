@@ -172,7 +172,7 @@ async def periodic_save_stats():
             now = datetime.now()
             
             #Time period to save resource information (minutes)
-            cycle_time=5
+            cycle_time=10
 
             # Calculate the next minute divisible by cycle_time=10 (e.g., 0, 10, 20, 30, 40, 50)
             current_minute = now.minute

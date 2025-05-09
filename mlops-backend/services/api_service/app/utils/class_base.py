@@ -29,6 +29,7 @@ class Experiment(BaseModel):
     version: str="v1.0.1"
     framework: str="Tensorflow"
     metrics: Metrics_Value = Metrics_Value(accuracy=0.0, loss=0.0)  # Metrics such as accuracy, loss...
+    metrics_history: Metrics_Graph
     hyperparameters: Dict[str, Any] = {"learningRate": 0.001, "batchSize": 16, "epochs": 50}  # Hyperparameters like learningRate, batchSize, epochs
     startTime: str='2025-02-20T10:00:00Z',
     endTime: str='2025-02-20T18:00:00Z',
@@ -58,7 +59,7 @@ class Experiment_Lastest(BaseModel):
 class Run(BaseModel):
     id: str = "1"  # Run ID (experiment_id)
     run_id: str = "ed6c6d46b1b343f2bc724932d2f8b668"  # Run ID
-    run_name: str = "stock_prediction_Conv1D-BiLSTM_ver001"  # Run name
+    run_name: str = "stock_prediction_Conv1D_BiLSTM_ver001"  # Run name
     dataset: str = "Stock_product"  # Dataset name, allows default value
     model: str = "LSTM"  # Model type, allows default value
     status: str = "FINISHED"  # Run status
@@ -76,7 +77,7 @@ class Run(BaseModel):
 class Run_ID(BaseModel):
     id: str = "1"  # Run ID (experiment_id)
     run_id: str = "ed6c6d46b1b343f2bc724932d2f8b668"  # Run ID
-    run_name: str = "stock_prediction_Conv1D-BiLSTM_ver001"  # Run name
+    run_name: str = "stock_prediction_Conv1D_BiLSTM_ver001"  # Run name
     status: str = "FINISHED"  # Run status
     runtime: str = "0h 1m 14s"  # Runtime
     created: str = "2025-02-20 14:25"  # Creation time
@@ -116,6 +117,35 @@ class ModelInfoAll(BaseModel):
     updatedAt: str
     thumbnail: str
     servingStatus: ServingStatusAll
+
+
+
+class ModelResources(BaseModel):
+    instanceType: str
+    autoScaling: bool
+    minInstances: int
+    maxInstances: int
+    memoryLimit: int
+    timeout: int
+
+
+class ModelMetrics(BaseModel):
+    requestsPerMinute: int
+    averageLatency: int
+    errorRate: float
+    successRate: float
+
+
+class ModelDeploy(BaseModel):
+    id: str
+    name: str
+    status: str
+    url: str
+    version: str
+    createdAt: str  # ISO 8601 string, e.g., "2025-04-11T01:02:03+09:00"
+    resources: ModelResources
+    metrics: ModelMetrics
+
 
 
 # Định nghĩa lớp để chứa thông tin của Dataset
@@ -200,6 +230,12 @@ class DatasetFeature(BaseModel):
     name: str
     type: str
     missing: int
+    
+class DatasetSplit(BaseModel):
+    train_set: int = 12500
+    val_set: int = 2500
+    test_set: int = 5000
+    outside_set: int = 8000
 
 
 class DatasetStatistics(BaseModel):
@@ -230,6 +266,7 @@ class Dataset(BaseModel):
     tags: List[str]
     description: str
     features: List[DatasetFeature]
+    split_ratio: DatasetSplit
     statistics: DatasetStatistics
     quality: DatasetQuality
     qualityScore: float

@@ -337,16 +337,37 @@ async def run_pipeline(background_tasks: BackgroundTasks):
         nodes = await get_workflows()
         
         # Khởi tạo các nhóm
-        group_1 = {"데이터 분할", "특성 엔지니어링", "데이터 검증", "데이터 수집"}
-        group_2 = {"모델 학습"}
-        group_3 = {"모델 분석", "모델 평가"}
-        group_4 = {"모니터링", "모델 배포", "모델 버전 관리"}
+        data_pipeline = {"데이터 분할", "특성 엔지니어링", "데이터 검증", "데이터 수집"}
+        data_collect={"데이터 분할"}
+        data_validate={"특성 엔지니어링"}
+        data_feature={"데이터 검증"}
+        data_split={"데이터 수집"}
+        
+        train_pipeline = {"모델 학습", "모델 분석", "모델 평가"}
+        model_train={"모델 학습"}
+        model_analysis={"모델 분석"}
+        model_evaluate={"모델 평가"}
+        
+        deploy_pipeline = {"모니터링", "모델 배포", "모델 버전 관리"}
+        monitoring={"모니터링"}
+        model_deploy={"모델 배포"}
+        model_version={"모델 버전 관리"}
         
         # Kiểm tra các group và xác định các flow
-        data_flow = 1 if any(node['data']['label'] in group_1 for node in nodes) else 0
-        train_flow = 1 if any(node['data']['label'] in group_2 for node in nodes) else 0
-        eval_flow = 1 if any(node['data']['label'] in group_3 for node in nodes) else 0
-        deploy_flow = 1 if any(node['data']['label'] in group_4 for node in nodes) else 0
+        data_flow = 1 if any(node['data']['label'] in data_pipeline for node in nodes) else 0
+        # Set for data pipeline task
+        collect = 1 if any(node['data']['label'] in data_collect for node in nodes) else 0
+        validate = 1 if any(node['data']['label'] in data_validate for node in nodes) else 0
+        feature_engineer = 1 if any(node['data']['label'] in data_feature for node in nodes) else 0
+        split = 1 if any(node['data']['label'] in data_split for node in nodes) else 0
+        
+        
+        train_flow = 1 if any(node['data']['label'] in model_train for node in nodes) else 0
+        eval_flow = 1 if any(node['data']['label'] in model_evaluate for node in nodes) else 0
+        
+        
+        deploy_flow = 1 if any(node['data']['label'] in model_deploy for node in nodes) else 0
+        
         
         # Xử lý dữ liệu pipeline (tạm thời chưa thực thi logic)
         if await check_if_flow_running():  # Kiểm tra nếu pipeline đang chạy
@@ -365,12 +386,14 @@ async def run_pipeline(background_tasks: BackgroundTasks):
             learningRate = None
             batchSize = None
             epochs = None
+            framework = None
             
             # Gọi hàm run_selected_flow để thực thi pipeline với các flow
             background_tasks.add_task(run_selected_flow, name, description, 
             data_type, dataset, ds_description, dvc_tag, file_path,
-            model_name, model, learningRate, batchSize, epochs, 
-            data_flow, train_flow, eval_flow, deploy_flow)  # Chạy pipeline đầy đủ từ data_flow đến deploy_flow
+            model_name, model, framework, learningRate, batchSize, epochs, 
+            data_flow, train_flow, eval_flow, deploy_flow,
+            collect, validate, feature_engineer, split)  # Chạy pipeline đầy đủ từ data_flow đến deploy_flow
             
             # Kiểm tra trạng thái flow
             for _ in range(5):  # Kiểm tra trong 5 giây

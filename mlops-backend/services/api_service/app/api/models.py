@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form
-from utils.mlflow_utils import get_registered_all_models, get_model_details, register_model, get_mlflow_and_datasets_info, get_latest_model_details
+from utils.mlflow_utils import (get_registered_all_models, get_model_details, register_model, get_mlflow_and_datasets_info, 
+                                get_latest_model_details, get_model_deploy_info, get_model_version_performance_compare, get_all_model_versions_info)
 from utils.class_base import (
     ModelOptions,  # 5. Model Options for Registration
-    ModelInfoAll, ModelInfoDetail,  # 7. Detailed Model Information
+    ModelInfoAll, ModelInfoDetail, 
+    ModelDeploy                 # 7. Detailed Model Information
 )
 
 from typing import List
@@ -43,6 +45,58 @@ async def get_model_detailed_info_by_id(model_id: str): #-> List[ModelInfoDetail
 async def get_model_register_options() -> ModelOptions:
     model_options = get_mlflow_and_datasets_info()
     return model_options  # Return as a list of ModelOptions objects
+
+
+async def get_model_deploy_info_by_id(model_id: str) -> List[ModelDeploy]:
+    models_all = get_registered_all_models()
+
+    # Find model name using the model_id
+    model_name = None
+    for model in models_all:
+        if model['id'] == model_id:
+            model_name = model['name']
+            
+    
+    if not model_name:
+        raise HTTPException(status_code=404, detail="Model ID not found")
+    
+    deploy_info_detail = get_model_deploy_info(model_name)
+    return deploy_info_detail
+
+
+async def get_model_version_compare_by_id(model_id: str):
+    models_all = get_registered_all_models()
+    # Find model name using the model_id
+    model_name = None
+    for model in models_all:
+        if model['id'] == model_id:
+            model_name = model['name']
+            break
+    
+    if not model_name:
+        raise HTTPException(status_code=404, detail="Model ID not found")
+    
+    # Fetch model version performance comparison
+    model_version_comparison = get_model_version_performance_compare(model_name)
+    
+    return model_version_comparison
+
+async def get_all_model_version_by_id(model_id: str):
+    models_all = get_registered_all_models()
+    # Find model name using the model_id
+    model_name = None
+    for model in models_all:
+        if model['id'] == model_id:
+            model_name = model['name']
+            break
+    
+    if not model_name:
+        raise HTTPException(status_code=404, detail="Model ID not found")
+    
+    # Fetch model version performance comparison
+    model_all_version = get_all_model_versions_info(model_name)
+    
+    return model_all_version
 
 
 async def create_model_registration(

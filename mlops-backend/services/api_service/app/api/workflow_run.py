@@ -121,8 +121,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 async def run_flow_cmd(flow_name: str, config_file: str, name: str = None, description: str = None, 
                        data_type:str=None, dataset: str = None, ds_description: str=None, dvc_tag: str=None, file_path:str=None,
-                       model_name:str=None,  model: str = None, learningRate: float = None, batchSize: int = None, epochs: int = None, 
-                       data_flow: int= None, train_flow: int= None, eval_flow: int= None, deploy_flow: int= None):
+                       model_name:str=None,  model: str = None, framework: str = None, learningRate: float = None, batchSize: int = None, epochs: int = None, 
+                       data_flow: int= None, train_flow: int= None, eval_flow: int= None, deploy_flow: int= None,
+                       collect: int=None, validate: int= None, feature_engineer: int= None, split: int= None ):
     global is_flow_running
     try:
         # Kiểm tra trạng thái của task trước khi bắt đầu
@@ -149,6 +150,8 @@ async def run_flow_cmd(flow_name: str, config_file: str, name: str = None, descr
             command += f" --model_type {model}"
         if model_name:
             command += f" --model_name {model_name}"
+        if framework:
+            command += f" --framework {framework}"
         if epochs:
             command += f" --epochs {epochs}"
         if learningRate:
@@ -182,6 +185,15 @@ async def run_flow_cmd(flow_name: str, config_file: str, name: str = None, descr
             command += f" --eval_flow {eval_flow}"  
         if deploy_flow:
             command += f" --deploy_flow {deploy_flow}"  
+            
+        if collect:
+            command += f" --collect {collect}"  
+        if validate:
+            command += f" --validate {validate}"  
+        if feature_engineer:
+            command += f" --feature_engineer {feature_engineer}"  
+        if split:
+            command += f" --split {split}"  
         
         command += "\""
         
@@ -205,9 +217,11 @@ async def run_flow_cmd(flow_name: str, config_file: str, name: str = None, descr
 # Define specific flow functions
 async def run_selected_flow(name: str = None, description: str = None, 
                        data_type:str=None, dataset: str = None, ds_description: str=None, dvc_tag: str=None, file_path:str=None,
-                       model_name:str=None,  model: str = None, learningRate: float = None, batchSize: int = None, epochs: int = None, 
-                       data_flow: int= None, train_flow: int= None, eval_flow: int= None, deploy_flow: int= None):
+                       model_name:str=None,  model: str = None, framework: str = None, learningRate: float = None, batchSize: int = None, epochs: int = None, 
+                       data_flow: int= None, train_flow: int= None, eval_flow: int= None, deploy_flow: int= None,
+                       collect: int=None,validate: int= None, feature_engineer: int= None, split: int= None):
     await run_flow_cmd("full_flow", "configs/full_flow_config.yaml", name, description, 
                        data_type, dataset, ds_description, dvc_tag, file_path,
-                       model_name,  model, learningRate, batchSize, epochs, 
-                       data_flow, train_flow, eval_flow, deploy_flow)
+                       model_name,  model, framework, learningRate, batchSize, epochs, 
+                       data_flow, train_flow, eval_flow, deploy_flow,
+                       collect, validate, feature_engineer, split)

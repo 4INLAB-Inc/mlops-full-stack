@@ -77,14 +77,22 @@ async def experiment_create_and_run(
             ds_description=None
             dvc_tag=None
             file_path=None
-            data_flow=1
+            data_flow=0
             train_flow=1
             eval_flow=1
             deploy_flow=1
+            collect=1
+            validate=1
+            feature_engineer=1
+            split=1
+            
+            framework=None
+            
             background_tasks.add_task(run_selected_flow, name, description, 
             data_type, dataset, ds_description, dvc_tag, file_path,
-            model_name, model, learningRate, batchSize, epochs, 
-            data_flow, train_flow, eval_flow, deploy_flow)  #Run full pipeline from data_flow to deploy
+            model_name, model, framework, learningRate, batchSize, epochs, 
+            data_flow, train_flow, eval_flow, deploy_flow,
+            collect, validate, feature_engineer, split)  #Run full pipeline from data_flow to deploy
             
             
             # Wait for task to start

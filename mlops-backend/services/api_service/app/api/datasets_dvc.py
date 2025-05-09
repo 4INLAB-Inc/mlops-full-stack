@@ -2,10 +2,8 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks, File, UploadFile,
 import os, json, shutil, time
 from datetime import datetime
 from typing import List, Dict
-from utils.class_base import Dataset, DatasetFeature, DatasetStatistics, DatasetQuality, DatasetVersion
-import logging
-import subprocess
-from api.workflow_run import check_if_flow_running, run_selected_flow  # Kiểm tra trạng thái task đang chạy
+from utils.class_base import Dataset, DatasetFeature, DatasetSplit, DatasetStatistics, DatasetQuality
+from api.workflow_run import check_if_flow_running, run_selected_flow
 from utils.class_base import Dataset
 from shlex import quote
 # Tạo router cho API datasets
@@ -60,8 +58,7 @@ async def get_all_datasets_info():
         # ✅ Công thức tính `qualityScore`
         qualityScore = (completeness * 0.5) + (consistency * 0.3) + (balance * 0.2)
         
-        createdAt = metadata.get("createdAt", datetime.fromtimestamp(os.path.getctime(ds_path)).isoformat())
-        updatedAt = metadata.get("updatedAt", datetime.fromtimestamp(os.path.getmtime(ds_path)).isoformat())
+        updatedAt = metadata.get("updatedAt", datetime.fromtimestamp(os.path.getmtime(ds_path)).strftime('%Y-%m-%d %H:%M:%S'))
         
         dataset = Dataset(
             # id=str(dataset_id),
@@ -70,8 +67,8 @@ async def get_all_datasets_info():
             type=metadata.get("type", "Unknown"),
             version=metadata.get("version", "Unknown"),
             size=metadata.get("size", 0),
-            lastModified=datetime.fromtimestamp(os.path.getmtime(ds_path)).strftime('%Y-%m-%d'),
-            createdAt=createdAt,
+            lastModified=metadata.get("lastModified", "Unknown"),
+            createdAt=updatedAt,
             updatedAt=updatedAt,
             rows=metadata.get("rows", 0),
             records=metadata.get("rows", 0),
@@ -81,6 +78,7 @@ async def get_all_datasets_info():
             tags=metadata.get("tags", []),
             description=metadata.get("description", "No description"),
             features=[DatasetFeature(**feat) for feat in metadata.get("features", [])],
+            split_ratio=DatasetSplit(**metadata.get("split_ratio", {})),
             statistics=DatasetStatistics(**metadata.get("statistics", {})),
             quality=DatasetQuality(**metadata.get("quality", {})),
             qualityScore=round(qualityScore, 2)
@@ -104,16 +102,16 @@ async def get_dataset_detail_info(dataset_id: str):
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     # Xử lý thời gian
-    created_at = metadata.get("createdAt", datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
-    updated_at = metadata.get("lastModified", datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
+    updated_at = metadata.get("lastModified", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
+    split_ratio_raw = metadata.get("split_ratio", {})
     # Chuẩn bị phản hồi đúng format
     dataset_detail = {
         "id": dataset_id,
         "name": metadata.get("name", dataset_id),
         "description": metadata.get("description", ""),
         "type": metadata.get("type", "Unknown"),
-        "createdAt": created_at,
+        "createdAt": updated_at,
         "updatedAt": updated_at,
         "size": metadata.get("size", 0),
         "format": metadata.get("format", "Unknown"),
@@ -137,6 +135,12 @@ async def get_dataset_detail_info(dataset_id: str):
             }
             for feat in metadata.get("features", [])
         ],
+        "split_ratio": {
+                            "train_set": split_ratio_raw.get("train_set", 12500),
+                            "val_set": split_ratio_raw.get("val_set", 2500),
+                            "test_set": split_ratio_raw.get("test_set", 5000),
+                            "outside_set": split_ratio_raw.get("outside_set", 8000),
+                        },
         "data": metadata.get("data", [])[-50:], # Lấy 50 dòng dữ liệu cuoi cung
         "columns": metadata.get("columns_list", []),
         "versions": metadata.get("versions", []),
@@ -158,8 +162,8 @@ async def get_dataset_detail_client(dataset_id: str):
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     # Process timestamps for created and updated times
-    created_at = metadata.get("createdAt", datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
-    updated_at = metadata.get("lastModified", datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
+    updated_at = metadata.get("lastModified", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    created_at = metadata.get("createdAt", updated_at)
 
     # Get the previous version of the dataset
     previous_version = metadata.get("previousVersion", "Unknown")
@@ -173,6 +177,8 @@ async def get_dataset_detail_client(dataset_id: str):
     # Get quality metrics and previous quality from metadata
     quality = metadata.get("quality", {})
     previous_quality = metadata.get("previousQuality", {})
+    
+    split_ratio_raw = metadata.get("split_ratio", {})
 
     # Prepare the client response structure
     dataset_detail_client = {
@@ -205,6 +211,12 @@ async def get_dataset_detail_client(dataset_id: str):
             }
             for feat in metadata.get("features", [])  # Extract each feature from the metadata
         ],
+        "split_ratio": {
+                            "train_set": split_ratio_raw.get("train_set", 12500),
+                            "val_set": split_ratio_raw.get("val_set", 2500),
+                            "test_set": split_ratio_raw.get("test_set", 5000),
+                            "outside_set": split_ratio_raw.get("outside_set", 8000),
+                        },
         "statistics": metadata.get("statistics", {}),  # Statistical information (e.g., numerical/categorical stats)
         "versions": metadata.get("versions", []),  # Versions history of the dataset
         "tags": metadata.get("tags", []),  # Tags associated with the dataset (e.g., ["time series", "sensor"])
@@ -258,8 +270,9 @@ async def get_versions_info_from_dataset(dataset_id: str) -> List[dict]:
     versions.sort(key=lambda x: [int(i) for i in x["version"].split(".")], reverse=True)
     
     return versions  # 모든 버전 데이터 반환
-
-
+import re
+def safe_filename(name: str) -> str:
+    return re.sub(r'[^\w\-_\.]', '_', name)
 
 
 async def dataset_create_and_run(
@@ -276,7 +289,8 @@ async def dataset_create_and_run(
         raise HTTPException(status_code=400, detail="Another data flow is currently running. Please wait.")
 
     # ✅ Lưu file vào thư mục dataset tương ứng
-    dataset_dir = os.path.join(DVC_DATA_STORAGE, ds_name)
+    ds_name_new=safe_filename(ds_name)
+    dataset_dir = os.path.join(DVC_DATA_STORAGE, ds_name_new)
     os.makedirs(dataset_dir, exist_ok=True)
     file_path = os.path.join(dataset_dir, dataset_file.filename)
     
@@ -316,6 +330,7 @@ async def dataset_create_and_run(
     dvc_tag=dvc_tag_list
     file_path=file_path
     model=None
+    framework=None
     learningRate=None
     batchSize=None
     epochs=None
@@ -324,10 +339,16 @@ async def dataset_create_and_run(
     eval_flow=0
     deploy_flow=0
     
+    collect=1
+    validate=1
+    feature_engineer=1
+    split=1
+    
     background_tasks.add_task(run_selected_flow, name, description, 
     data_type, ds_name, ds_description, dvc_tag, file_path,
-    model_name, model, learningRate, batchSize, epochs, 
-    data_flow, train_flow, eval_flow, deploy_flow) 
+    model_name, model, framework, learningRate, batchSize, epochs, 
+    data_flow, train_flow, eval_flow, deploy_flow,
+    collect, validate, feature_engineer, split) 
     
     # Wait for task to start
     for _ in range(5):  # Check for 3 seconds
