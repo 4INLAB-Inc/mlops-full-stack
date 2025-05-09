@@ -42,7 +42,7 @@ def override_config(config, args, keys_map, data_type):
                 print(f"Overriding {key} to: {value}")
             
             # Case 2: Override for general keys (like pipeline, general hyperparameters)
-            elif "pipeline" in key or "dataset" in key:  # Keys not specific to data_type
+            elif "pipeline" in key or "dataset" in key or "enabled_tasks" in key:  # Keys not specific to data_type
                 for part in keys[:-1]:
                     d = d.setdefault(part, {})  # Create nested dictionaries if they don't exist
                 d[keys[-1]] = value  # Override the value
@@ -69,6 +69,7 @@ def main():
     parser.add_argument("--model_type", type=str, default=None, help="Override model type.")
     parser.add_argument("--model_name", type=str, default=None, help="Override model name.")
     parser.add_argument("--model_version", type=int, default=None, help="Override model version.")
+    parser.add_argument("--framework", type=str, default=None, help="Override AI model framework.")
     
     # For hyperparameters
     parser.add_argument("--learningRate", type=float, default=None, help="Override learningRate.")
@@ -80,6 +81,12 @@ def main():
     parser.add_argument("--train_flow", type=int, default=None, help="Override train flow pipeline action.")
     parser.add_argument("--eval_flow", type=int, default=None, help="Override evaluate flow pipeline action.")
     parser.add_argument("--deploy_flow", type=int, default=None, help="Override deploy flow pipeline action.")
+    
+    # For data_flow task actions
+    parser.add_argument("--collect", type=int, default=None, help="Override data collect task for data flow.")
+    parser.add_argument("--validate", type=int, default=None, help="Override data validation task for data flow.")
+    parser.add_argument("--feature_engineer", type=int, default=None, help="Override data feature engineer task for data flow.")
+    parser.add_argument("--split", type=int, default=None, help="Override data split task for data flow.")
     
     args = parser.parse_args()
 
@@ -103,6 +110,7 @@ def main():
         'model.timeseries.model_type': 'model_type',
         'model.timeseries.model_name': 'model_name',
         'model.timeseries.model_version': 'model_version',
+        'model.timeseries.framework': 'framework',
         
         'model.image.model_type': 'model_type',
         'model.image.model_name': 'model_name',
@@ -119,7 +127,12 @@ def main():
         'pipeline.data_flow': 'data_flow',
         'pipeline.train_flow': 'train_flow',
         'pipeline.eval_flow': 'eval_flow',
-        'pipeline.deploy_flow': 'deploy_flow'
+        'pipeline.deploy_flow': 'deploy_flow',
+        
+        'enabled_tasks.data_flow.collect': 'collect',
+        'enabled_tasks.data_flow.validate': 'validate',
+        'enabled_tasks.data_flow.feature_engineer': 'feature_engineer',
+        'enabled_tasks.data_flow.split': 'split',
     }
 
     # Ensure data_type is specified
