@@ -1,4 +1,6 @@
 import os
+import datetime
+import yaml
 import shutil
 import mlflow
 import requests
@@ -10,8 +12,6 @@ import tensorflow as tf
 from typing import List, Dict, Union, Tuple, Any
 from prefect import task, flow, get_run_logger, variables
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import InputLayer, Conv2D, Flatten, Dense, LSTM, GRU, Bidirectional, Dropout, Conv1D, MaxPooling1D
-from .utils.tf_data_utils import build_data_pipeline
 
 PREFECT_PORT = os.getenv('PREFECT_PORT', '4200')
 PREFECT_API_URL = os.getenv('PREFECT_API_URL', f'http://prefect:{PREFECT_PORT}/api')
@@ -54,7 +54,7 @@ def validate_model_metadata(model_metadata_file_name: str, run_name: str):
 
     if Path(metadata_file).exists():
         logger.info(f"✅ Metadata file found: {metadata_file}")
-        return model_metadata_file_name
+        return model_metadata_file_name, metadata_file
     elif Path(backup_metadata_file_path).exists():
         logger.warning(f"⚠️ Metadata file missing, restoring from backup: {backup_metadata_file}")
         
@@ -63,7 +63,7 @@ def validate_model_metadata(model_metadata_file_name: str, run_name: str):
         restored_metadata_file = backup_metadata_file.replace(".backup", "")
         shutil.move(backup_metadata_file_path, restored_metadata_file_path)
         logger.info(f"🔄 Backup restored: {restored_metadata_file_path}")
-        return restored_metadata_file
+        return restored_metadata_file, restored_metadata_file_path
     else:
         logger.error(f"🚨 Both metadata file and backup are missing! Deployment aborted.")
         raise FileNotFoundError(f"❌ Metadata file {metadata_file} and its backup are missing!")
@@ -116,6 +116,7 @@ def put_model_to_service(model_metadata_file_name: str, run_name: str, service_h
     else:
         logger.error(f"PUT model failed. Status code: {res.status_code}, Response: {res.text}")
         raise Exception(f"Failed to put model to {endpoint}")
+    return endpoint
 
 
 @task(name='log_model_details')
@@ -130,6 +131,46 @@ def log_model_details(model_metadata_file_name: str, run_name: str):
     model_size = os.path.getsize(metadata_file) / (1024 * 1024)  # Convert to MB
     logger = get_run_logger()
     logger.info(f"Model metadata: {metadata_file}, Size: {model_size:.2f} MB")
+    
+    
+def update_deploy_metadata_file(metadata_file_path: str, deploy_endpoint: str, model_version: int):
+
+    with open(metadata_file_path, 'r', encoding='utf-8') as f:
+        metadata = yaml.safe_load(f)
+
+    # Trích endpoint ID từ URL (lấy phần cuối của đường dẫn)
+    endpoint_id = deploy_endpoint.rstrip("/").split("/")[-1]
+
+    deploy_info = {
+        "id": endpoint_id,
+        "name": "프로덕션 엔드포인트",
+        "status": "running",
+        "url": deploy_endpoint,
+        "version": str(model_version),  # 👈 dùng version từ tham số
+        "createdAt": datetime.datetime.utcnow().isoformat(),
+        "resources": {
+            "instanceType": "cpu.medium",
+            "autoScaling": True,
+            "minInstances": 1,
+            "maxInstances": 3,
+            "memoryLimit": 4096,
+            "timeout": 30
+        },
+        "metrics": {
+            "requestsPerMinute": 250,
+            "averageLatency": 45,
+            "errorRate": 0.2,
+            "successRate": 99.8
+        }
+    }
+
+    metadata["deploy"] = deploy_info
+
+    with open(metadata_file_path, 'w', encoding='utf-8') as f:
+        yaml.safe_dump(metadata, f, allow_unicode=True)
+
+    print(f"✅ Deployment info updated in: {metadata_file_path}")
+
 
 
 

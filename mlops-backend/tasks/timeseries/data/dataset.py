@@ -1,4 +1,5 @@
-import os
+# 📁 tasks/timeseries/data/dataset.py
+import os, json
 import time
 import pandas as pd
 import numpy as np
@@ -14,21 +15,39 @@ from datetime import datetime
 
 #======================TASKS FOR DATA VALIDATION AND PREPARATION===========================
 
-@task(name='validate_data', log_prints=True)
-def validate_data(ds_repo_path: str, save_path: str = 'ds_val.html', img_ext: str = 'jpeg'):
+    
+# Validate time series data (check nulls, duplicates, outliers)
+def validate_timeseries_data(df: pd.DataFrame):
     logger = get_run_logger()
-    train_ds, test_ds = classification_dataset_from_directory(
-        root=os.path.join(ds_repo_path, 'images'), object_type='VisionData',
-        image_extension=img_ext
-    )
-    suite = train_test_validation()
-    logger.info("Running data validation test suite")
-    result = suite.run(train_ds, test_ds)
-    result.save_as_html(save_path)
-    logger.info(f'Finished data validation and saved report to {save_path}')
+    report = {}
+
+    # 1. Check for nulls
+    null_counts = df.isnull().sum().to_dict()
+    report["null_counts"] = null_counts
+    logger.info(f"🧪 Null value check: {null_counts}")
+
+    # 2. Check for duplicate rows
+    duplicate_count = df.duplicated().sum()
+    report["duplicate_rows"] = duplicate_count
+    logger.info(f"🔁 Duplicate rows: {duplicate_count}")
+
+    # 3. Check for outliers (only on numerical columns)
+    outlier_report = {}
+    for col in df.select_dtypes(include=[np.number]).columns:
+        q1 = df[col].quantile(0.25)
+        q3 = df[col].quantile(0.75)
+        iqr = q3 - q1
+        lower_bound = q1 - 1.5 * iqr
+        upper_bound = q3 + 1.5 * iqr
+        outliers = ((df[col] < lower_bound) | (df[col] > upper_bound)).sum()
+        outlier_report[col] = int(outliers)
+    report["outliers"] = outlier_report
+    logger.info(f"📈 Outlier check: {outlier_report}")
+
+    return report
 
 
-@task(name='prepare_dvc_dataset')
+# @task(name='prepare_dvc_dataset')
 def prepare_dataset(ds_root: str, ds_name: str, dvc_tag: str, dvc_checkout: bool = True):
     logger = get_run_logger()
     logger.info(f"Dataset name: {ds_name} | DVC tag: {dvc_tag}")
@@ -74,7 +93,7 @@ def prepare_dataset(ds_root: str, ds_name: str, dvc_tag: str, dvc_checkout: bool
 
 #======================TASKS FOR TIME SERIES===========================
 
-@task(name='load_time_series_data')
+# @task(name='load_time_series_data')
 def load_time_series_data(file_path: str, date_col: str, target_col: str):
     logger = get_run_logger()
     logger.info(f"Loading time series data from {file_path}...")
@@ -127,22 +146,11 @@ def load_time_series_data(file_path: str, date_col: str, target_col: str):
 
 
 
-@task(name='prepare_time_series_data')
-def prepare_time_series_data(data: pd.DataFrame, time_step: int, target_col: str) -> Tuple[np.ndarray, np.ndarray, MinMaxScaler]:
-    """
-    Prepare time series data by handling missing values, normalizing, and creating sequences.
-
-    Args:
-        data (pd.DataFrame): Input DataFrame containing the time series data.
-        time_step (int): The number of previous time steps to use as input features.
-        target_col (str): The target column to predict.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray, MinMaxScaler]: X (features), y (targets), and scaler object.
-    """
+# @task(name='prepare_time_series_data')
+def prepare_time_series_data(data: pd.DataFrame, sequences: int, target_col: str) -> Tuple[np.ndarray, np.ndarray, MinMaxScaler]:
 
     logger = get_run_logger()
-    logger.info(f"Preparing time series data with time_step={time_step} for column {target_col}...")
+    logger.info(f"Preparing time series data with time squences={sequences} for column {target_col}...")
 
     if target_col not in data.columns:
         raise ValueError(f"❌ Error: Target column '{target_col}' not found in DataFrame.")
@@ -185,9 +193,9 @@ def prepare_time_series_data(data: pd.DataFrame, time_step: int, target_col: str
 
     # ✅ Sequence creation
     X, y = [], []
-    for i in range(len(target_values) - time_step):
-        X.append(target_values[i:i + time_step, 0])
-        y.append(target_values[i + time_step, 0])
+    for i in range(len(target_values) - sequences):
+        X.append(target_values[i:i + sequences, 0])
+        y.append(target_values[i + sequences, 0])
 
     X, y = np.array(X), np.array(y)
     X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
@@ -197,7 +205,7 @@ def prepare_time_series_data(data: pd.DataFrame, time_step: int, target_col: str
     return X, y, scaler
 
 
-@task(name='split_time_series_data')
+# @task(name='split_time_series_data')
 def split_time_series_data(X: np.ndarray, y: np.ndarray, test_size: float = 0.2, val_size: float = 0.1):
     logger = get_run_logger()
     logger.info("Splitting time series data...")
@@ -248,25 +256,45 @@ def calculate_categorical_statistics(df: pd.DataFrame) -> Dict[str, Any]:
     return stats
 
 
-# @task(name='calculate_quality')
 def calculate_quality(df: pd.DataFrame) -> Dict[str, Any]:
     logger = get_run_logger()
-    logger.info("Calculating data quality metrics...")
+    logger.info("🔍 Calculating data quality metrics...")
 
-    completeness = df.isnull().mean().mean() * 100
-    consistency = df.nunique() / df.count() * 100
-    balance = df.nunique().mean() / len(df) * 100
+    # COMPLETENESS: % non-null values across all columns
+    completeness = (1 - df.isnull().mean().mean()) * 100
 
+    # CONSISTENCY: 1 - average uniqueness ratio across columns
+    avg_unique_ratio = (df.nunique() / df.count()).mean()
+    consistency = (1 - avg_unique_ratio) * 100
+
+    # BALANCE: average entropy-like score per column
+    balance_scores = []
+    for col in df.columns:
+        col_counts = df[col].value_counts(normalize=True)
+        if len(col_counts) <= 1:
+            balance_scores.append(0.0)
+            continue
+        std_dev = col_counts.std()
+        balance_score = (1 - std_dev) * 100
+        balance_scores.append(balance_score)
+
+    balance = sum(balance_scores) / len(balance_scores)
+
+    # Compose quality metrics
     quality_metrics = {
-        'completeness': round(completeness, 2),
-        'consistency': round(consistency.mean(), 2),
-        'balance': round(balance, 2)
+        "completeness": round(completeness, 2),
+        "consistency": round(consistency, 2),
+        "balance": round(balance, 2)
     }
 
-    logger.info("Data quality metrics calculated successfully.")
+    logger.info(f"📊 Quality Scores → Completeness: {quality_metrics['completeness']}%, "
+                f"Consistency: {quality_metrics['consistency']}%, "
+                f"Balance: {quality_metrics['balance']}%")
+
     return quality_metrics
 
-@task(name='calculate_features')
+
+# @task(name='calculate_features')
 def calculate_features(df: pd.DataFrame) -> List[Dict[str, Union[str, int]]]:
     """
     Calculate the features in the dataset.
@@ -297,31 +325,25 @@ def calculate_features(df: pd.DataFrame) -> List[Dict[str, Union[str, int]]]:
 #======================TASK FOR GENERATING FULL METADATA===========================
 
 # Function to increment the version
-def increment_version(version: str):
-    # Split the version into major, minor, and patch
+def increment_version(version: str) -> str:
     major, minor, patch = map(int, version.split('.'))
-    
-    # Check if patch >= 10
-    if patch >= 10:
-        # If patch >= 10, increase the minor version by 1 and reset patch to 0
-        minor += 1
-        patch = 0
-    elif patch == 9:
-        # If patch == 9, keep patch the same (no change)
-        patch += 1
-    else:
-        # If patch < 9, only increment the patch version by 1
-        patch += 1
-    
-    # Check if minor >= 10, if so increase major and reset minor to 0
-    if minor >= 10:
-        major += 1
-        minor = 0
+
+    patch += 1
+
+    if patch > 9:
+        # Tính số lần vượt qua mỗi nhóm 10
+        group = patch // 10
+        minor += group
+        patch = patch % 10
+
+    if minor > 9:
+        major += minor // 10
+        minor = minor % 10
 
     return f"{major}.{minor}.{patch}"
 
 
-@task(name='generate_metadata_timeseries')
+# @task(name='generate_metadata_timeseries')
 # Function to generate metadata for time series datasets
 def generate_metadata_timeseries(df: pd.DataFrame, ds_id, ds_name: str, ds_author: str, data_type: str, ds_cfg: Dict[str, Any], updated_file_path: str) -> Dict[str, Any]:
     """
@@ -360,7 +382,12 @@ def generate_metadata_timeseries(df: pd.DataFrame, ds_id, ds_name: str, ds_autho
         }]
     else:
         # Get the largest existing version
-        last_version = max(version_info, key=lambda x: x["version"])["version"]
+        # last_version = max(version_info, key=lambda x: x["version"])["version"]
+        last_version = max(
+                version_info,
+                key=lambda x: list(map(int, x["version"].split(".")))
+            )["version"]
+
         
         # Increment the version based on the largest existing version
         new_version = increment_version(last_version)
@@ -389,6 +416,12 @@ def generate_metadata_timeseries(df: pd.DataFrame, ds_id, ds_name: str, ds_autho
         "version": "1.0.0",
         "format": "CSV/TXT",
         "features": features,
+        "split_ratio":{
+            "train_set": 12500,
+            "val_set": 2500,
+            "test_set": 5000,
+            "outside_set": 8000,
+        },
         "statistics": {
             "numerical": numerical_stats,
             "categorical": categorical_stats
