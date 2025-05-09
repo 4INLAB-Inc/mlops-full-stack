@@ -21,7 +21,7 @@
 
 ### Customization Process (모델 추가, Tasks-Flows 수정 등등)
 
-- **Step 1**: MLOps 플랫폼의 Tasks, 예를 들어 데이터 처리 (dataset.py), 모델 학습 구축 (ai_models/), 모델 배포 (deploy.py) 등이 "/task" 폴더에 정의되어 있다.
+- **Step 1**: MLOps 플랫폼의 Tasks,  데이터 처리(/data), 모델 학습(/train), 모델 평가(/eval) 및 배포(/deploy)와 같은 각 데이터 유형(예: 시계열)에 해당하는 작업 등이 "/task/timeseries" 폴더에 정의되어 있다.
 - **Step 2**: 정의된 Tasks는 "/flows" 폴더에 있는 각 플로우(data_flow, train_flow, eval_flow, deploy_flow, full_flow)에서 호출된다.
 플로우에서 사용되는 변수들은 "/configs" 폴더 내의 설정 파일에 정의되어 있다.
 - **Step 3**: 플로우는 workspace에 있는 "run_flow.py" 파일을 통해 호출되고 실행된다. 이 파일은 Jupyter Notebook의 터미널에서 직접 실행할 수 있다.
