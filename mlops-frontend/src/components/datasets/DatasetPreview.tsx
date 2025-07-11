@@ -16,6 +16,8 @@ import {
   HStack,
   Select,
   Input,
+  InputGroup, 
+  InputLeftElement,
   Button,
   Tabs,
   TabList,
@@ -46,6 +48,7 @@ import {
 } from 'recharts'
 import { FiFilter, FiSearch, FiDownload } from 'react-icons/fi'
 
+
 interface DatasetPreviewProps {
   datasetId: string
 }
@@ -66,6 +69,7 @@ interface ColumnStats {
 interface DataPoint {
   [key: string]: any
 }
+
 
 export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
   const [activeTab, setActiveTab] = useState('table')
@@ -112,8 +116,8 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
     if (data.length === 0) return stats
 
     Object.keys(data[0]).forEach(column => {
-      const values = data.map(row => row[column])
-      const nonNullValues = values.filter(v => v != null)
+      const values = data.map((row: DataPoint) => row[column])
+      const nonNullValues = values.filter((v: any) => v != null);
       
       const stat: ColumnStats = {
         name: column,
@@ -126,7 +130,7 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
       if (typeof values[0] === 'number') {
         stat.min = Math.min(...nonNullValues)
         stat.max = Math.max(...nonNullValues)
-        stat.mean = nonNullValues.reduce((a, b) => a + b, 0) / nonNullValues.length
+        stat.mean = nonNullValues.reduce((a: number, b: number) => a + b, 0) / nonNullValues.length;
         const sorted = [...nonNullValues].sort((a, b) => a - b)
         stat.median = sorted[Math.floor(sorted.length / 2)]
         
@@ -138,7 +142,7 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
           const binEnd = binStart + binSize
           return {
             bin: binStart,
-            count: nonNullValues.filter(v => v >= binStart && v < binEnd).length
+            count: nonNullValues.filter((v: number) => v >= binStart && v < binEnd).length
           }
         })
       }
@@ -151,7 +155,7 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
 
   // 검색어 기준으로 데이터 필터링
   const filteredData = useMemo(() => {
-    return data.filter(row =>
+    return data.filter((row: DataPoint) =>
       Object.values(row).some(value =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )
@@ -166,6 +170,10 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
 
   const bgCard = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.700')
+  interface Feature {
+    name: string;
+    type: string;
+  }
 
   return (
     <VStack spacing={4} align="stretch">
@@ -173,12 +181,17 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
       <Card bg={bgCard} borderColor={borderColor} borderWidth={1}>
         <CardBody>
           <HStack spacing={4}>
-            <Input
-              placeholder="데이터 검색..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              leftIcon={<FiSearch />}
-            />
+            <InputGroup>
+              <InputLeftElement pointerEvents="none">
+                <FiSearch />
+              </InputLeftElement>
+              <Input
+                placeholder="데이터 검색..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </InputGroup>
+
             <Select
               placeholder="컬럼 선택"
               value={selectedColumn}
@@ -190,6 +203,7 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
                 </option>
               ))}
             </Select>
+
             <Button leftIcon={<FiDownload />} colorScheme="blue">
               CSV 다운로드
             </Button>
@@ -198,7 +212,7 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
       </Card>
 
       {/* 메인 콘텐츠 */}
-      <Tabs colorScheme="blue" value={activeTab} onChange={index => setActiveTab(index.toString())}>
+      <Tabs colorScheme="blue" index={parseInt(activeTab)} onChange={(index) => setActiveTab(index.toString())}>
         <TabList>
           <Tab>테이블 뷰</Tab>
           <Tab>통계 분석</Tab>
@@ -220,7 +234,7 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
                       </Tr>
                     </Thead>
                     <Tbody>
-                      {paginatedData.map((row, idx) => (
+                      {paginatedData.map((row: { [key: string]: any }, idx: number) => (
                         <Tr key={idx}>
                           {Object.entries(row).map(([key, value]) => (
                             <Td key={key}>
@@ -335,11 +349,11 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
                         {/* X축의 날짜/시간 열 자동 찾기*/}
                         <XAxis
                           dataKey={
-                            dataset?.features?.find(f => f.type.includes('datetime'))?.name || 'INPUT_DATE'
+                            dataset?.features?.find((f: Feature) => f.type.includes('datetime'))?.name || 'INPUT_DATE'
                           }
                           tickFormatter={(value) => {
                             const date = new Date(value);
-                            if (isNaN(date)) return value;
+                            if (isNaN(date.getTime())) return value;
                         
                             const yy = String(date.getFullYear()).slice(2);
                             const MM = String(date.getMonth() + 1).padStart(2, '0');
@@ -360,15 +374,16 @@ export function DatasetPreview({ datasetId }: DatasetPreviewProps) {
 
                         {/* 숫자 열 자동 그리기 */}
                         {dataset?.features
-                          ?.filter(f => ['int64', 'float64'].includes(f.type))
-                          .map((feature, idx) => (
+                          ?.filter((f: Feature) => ['int64', 'float64'].includes(f.type))  // Chỉ định kiểu cho 'f'
+                          .map((feature: Feature, idx: number) => (  // Chỉ định kiểu cho 'feature'
                             <Line
                               key={feature.name}
                               type="monotone"
                               dataKey={feature.name}
-                              stroke={['#3182CE', '#38A169', '#DD6B20', '#805AD5'][idx % 4]}
+                              stroke={['#3182CE', '#38A169', '#DD6B20', '#805AD5'][idx % 4]}  // Lựa chọn màu sắc dựa trên index
                             />
-                        ))}
+                          ))
+}
                       </LineChart>
                     </ResponsiveContainer>
                   </Box>

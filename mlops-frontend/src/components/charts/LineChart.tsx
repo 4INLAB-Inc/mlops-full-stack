@@ -50,9 +50,8 @@ export default function LineChart({ data, categories, xLabel, yLabel }: LineChar
     colors: ['#F6AD55', '#4FD1C5'],
     stroke: {
       width: 3,
-      curve: 'smooth',
-      lineCap: 'round',
-      dashArray: [0, 0]
+      curve: 'smooth' as 'smooth' | 'straight' | 'stepline' | 'linestep' | 'monotoneCubic',
+      lineCap: 'round' as 'round' | 'butt' | 'square' // Explicitly cast here
     },
     markers: {
       size: 5,
@@ -120,20 +119,13 @@ export default function LineChart({ data, categories, xLabel, yLabel }: LineChar
             fontSize: '12px'
           },
           formatter: (value: number) => {
-            return yLabel.includes('%') ? `${value}%` : value;
+            if (yLabel?.includes('%')) {
+              return `${value}%`; // Return a string (not a number)
+            }
+            return `${value}`; // Ensure returning a string
           }
         }
-      },
-      // {
-      //   opposite: true,
-      //   labels: {
-      //     style: {
-      //       colors: isDark ? '#CBD5E0' : '#4A5568',
-      //       fontSize: '12px'
-      //     },
-      //     formatter: (value: number) => `${value}`
-      //   }
-      // }
+      }
     ],
     
     tooltip: {
@@ -154,8 +146,8 @@ export default function LineChart({ data, categories, xLabel, yLabel }: LineChar
       }
     },
     legend: {
-      position: 'top',
-      horizontalAlign: 'right',
+      position: 'top' as 'top' | 'right' | 'bottom' | 'left',
+      horizontalAlign: 'right' as 'right' | 'left' | 'center',
       floating: true,
       offsetY: -25,
       offsetX: -5,

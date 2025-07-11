@@ -1,31 +1,35 @@
 import { useState, useEffect } from 'react'
 
+// DatasetFeature defines information about the features of the dataset.
 export interface DatasetFeature {
   name: string
   type: string
   missing: number
 }
 
+// DatasetStatistics defines the statistics of the dataset, including numerical and categorical statistics.
 export interface DatasetStatistics {
   numerical?: {
-    mean: number[]
-    std: number[]
-    min: number[]
-    max: number[]
+    mean: number[]   // Mean values of numerical columns
+    std: number[]    // Standard deviation of numerical columns
+    min: number[]    // Minimum values of numerical columns
+    max: number[]    // Maximum values of numerical columns
   }
   categorical?: {
-    unique: number[]
-    top: string[]
-    freq: number[]
+    unique: number[]  // The number of unique values in categorical columns
+    top: string[]     // The most frequent values in categorical columns
+    freq: number[]    // Frequency of the most frequent values in categorical columns
   }
 }
 
+// DatasetQuality defines the quality of the dataset (completeness, consistency, balance).
 export interface DatasetQuality {
-  completeness: number
-  consistency: number
-  balance: number
+  completeness: number  // Completeness of the dataset
+  consistency: number   // Consistency of the dataset
+  balance: number       // Balance of data classes in the dataset
 }
 
+// Dataset defines the structure of a dataset, including its size, status, features, statistics, and quality.
 export interface Dataset {
   id: string
   name: string
@@ -34,37 +38,38 @@ export interface Dataset {
   lastModified: string
   rows: number
   columns: number
-  status: 'completed' | 'processing' | 'failed'
+  status: 'completed' | 'processing' | 'failed'  // The status of the dataset
   progress: number
-  tags: string[]
+  tags: string[]   // Tags associated with the dataset
   description: string
-  features: DatasetFeature[]
-  statistics: DatasetStatistics
-  quality: DatasetQuality
+  features: DatasetFeature[]   // Features of the dataset
+  statistics: DatasetStatistics  // Statistical information of the dataset
+  quality: DatasetQuality      // Quality metrics of the dataset
 }
 
+// DatasetSummary provides a summary of datasets.
 export interface DatasetSummary {
   totalDatasets: number
   totalSize: number
   processingDatasets: number
-  datasetTypes: { [key: string]: number }
-  recentUpdates: Dataset[]
+  datasetTypes: { [key: string]: number }  // Dataset types and the number of datasets of each type
+  recentUpdates: Dataset[]   // List of the most recent dataset updates
 }
 
-// Mock data
-const mockDatasets = {
+// Mock data: Example datasets to simulate a real dataset collection
+const mockDatasets: { [key: string]: Dataset } = {
   'production-timeseries': {
     id: 'production-timeseries',
-    name: '생산라인 센서 데이터',
+    name: '생산라인 센서 데이터',  // Name of the dataset in Korean
     type: 'TimeSeries',
-    size: 52428800,
-    lastModified: '2024-02-07',
-    rows: 87600,
-    columns: 12,
-    status: 'completed',
-    progress: 100,
-    tags: ['시계열', '생산', '센서'],
-    description: '생산라인의 실시간 센서 데이터 (온도, 압력, 진동 등)',
+    size: 52428800,  // Dataset size in bytes
+    lastModified: '2024-02-07',  // Date of last modification
+    rows: 87600,  // Number of rows in the dataset
+    columns: 12,  // Number of columns in the dataset
+    status: 'completed',  // Status of the dataset
+    progress: 100,  // Completion progress percentage
+    tags: ['시계열', '생산', '센서'],  // Tags in Korean
+    description: '생산라인의 실시간 센서 데이터 (온도, 압력, 진동 등)',  // Description in Korean
     features: [
       { name: 'timestamp', type: 'datetime', missing: 0 },
       { name: 'temperature', type: 'float32', missing: 12 },
@@ -88,7 +93,7 @@ const mockDatasets = {
   },
   'quality-inspection': {
     id: 'quality-inspection',
-    name: '품질 검사 데이터',
+    name: '품질 검사 데이터',  // Name in Korean
     type: 'Structured',
     size: 157286400,
     lastModified: '2024-02-06',
@@ -96,8 +101,8 @@ const mockDatasets = {
     columns: 25,
     status: 'completed',
     progress: 100,
-    tags: ['정형', '품질', '검사'],
-    description: '제품 품질 검사 결과 데이터 (치수, 외관, 성능 등)',
+    tags: ['정형', '품질', '검사'],  // Tags in Korean
+    description: '제품 품질 검사 결과 데이터 (치수, 외관, 성능 등)',  // Description in Korean
     features: [
       { name: 'product_id', type: 'string', missing: 0 },
       { name: 'dimension_x', type: 'float32', missing: 0 },
@@ -126,7 +131,7 @@ const mockDatasets = {
   },
   'defect-images': {
     id: 'defect-images',
-    name: '제품 결함 이미지',
+    name: '제품 결함 이미지',  // Name in Korean
     type: 'Image',
     size: 5368709120,
     lastModified: '2024-02-05',
@@ -134,8 +139,8 @@ const mockDatasets = {
     columns: 4,
     status: 'processing',
     progress: 85,
-    tags: ['이미지', '결함', '검사'],
-    description: '제품 표면 결함 검사 이미지 데이터',
+    tags: ['이미지', '결함', '검사'],  // Tags in Korean
+    description: '제품 표면 결함 검사 이미지 데이터',  // Description in Korean
     features: [
       { name: 'image_id', type: 'string', missing: 0 },
       { name: 'defect_class', type: 'string', missing: 0 },
@@ -163,11 +168,13 @@ const mockDatasets = {
   },
 }
 
+// useDatasets hook manages datasets state and provides methods to manipulate datasets
 export const useDatasets = () => {
   const [datasets, setDatasets] = useState<{ [key: string]: Dataset }>(mockDatasets)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
+  // getSummary provides a summary of all datasets
   const getSummary = (): DatasetSummary => {
     const datasetList = Object.values(datasets)
     
@@ -185,6 +192,7 @@ export const useDatasets = () => {
     }
   }
 
+  // addDataset adds a new dataset to the state
   const addDataset = (dataset: Dataset) => {
     setDatasets(prev => ({
       ...prev,
@@ -192,6 +200,7 @@ export const useDatasets = () => {
     }))
   }
 
+  // updateDataset updates an existing dataset with new information
   const updateDataset = (id: string, updates: Partial<Dataset>) => {
     setDatasets(prev => ({
       ...prev,
@@ -199,6 +208,7 @@ export const useDatasets = () => {
     }))
   }
 
+  // deleteDataset removes a dataset from the state
   const deleteDataset = (id: string) => {
     setDatasets(prev => {
       const newDatasets = { ...prev }

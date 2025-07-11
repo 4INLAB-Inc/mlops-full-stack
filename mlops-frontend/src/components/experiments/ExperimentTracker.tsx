@@ -77,16 +77,53 @@ const getStatusColor = (status: string) => {
 //     timestamp: '2024-02-20 18:15'
 //   },
 // ]
+interface MetricsHistory {
+  trainAcc: number[];
+  valAcc: number[];
+  trainLoss: number[];
+  valLoss: number[];
+}
+
+interface Hyperparameters {
+  learningRate: number;
+  batchSize: number;
+  epochs: number;
+}
+
+interface Experiment {
+  id: string;
+  name: string;
+  status: string;
+  dataset: string;
+  model: string;
+  version: string;
+  framework: string;
+  metrics: {
+    accuracy: number;
+    loss: number;
+  };
+  metrics_history: MetricsHistory;
+  hyperparameters: Hyperparameters;
+  startTime: string[];
+  endTime: string[];
+  createdAt: string[];
+  updatedAt: string;
+  runtime: string;
+  timestamp: string;
+  description: string;
+}
+
 
 const ExperimentTracker = () => {
 
-  const [experiments, setExperiments] = useState([]);
+  const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const borderColor = useColorModeValue('gray.200', 'gray.700')
   const headerBg = useColorModeValue('gray.50', 'gray.700')
   const rowHoverBg = useColorModeValue('gray.50', 'gray.700')
+  
 
   useEffect(() => {
     const fetchExperiments = async () => {
@@ -98,8 +135,12 @@ const ExperimentTracker = () => {
         const data = await response.json();
         setExperiments(data);
 
-      } catch (error) {
-        setError(error.message);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          setError(error.message); // Now we can safely access error.message
+        } else {
+          setError('An unknown error occurred'); // Fallback if the error is not an instance of Error
+        }
       } finally {
         setLoading(false);
       }

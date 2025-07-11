@@ -1,5 +1,3 @@
-'use client'
-
 import {
   Card,
   CardBody,
@@ -50,7 +48,7 @@ export default function ModelMetricsCard({
     <ChakraCard
       initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      transition="all 0.3s ease-in-out"
       bg={bgColor}
       borderWidth="1px"
       borderColor={borderColor}

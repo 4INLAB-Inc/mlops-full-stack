@@ -1,5 +1,5 @@
 'use client'
-
+import type { ReactNode } from 'react';
 import { 
   useState, 
   useEffect, 
@@ -16,7 +16,7 @@ import Link from 'next/link'
 import { useDatasets } from '@/hooks/useDatasets'
 import { useToast } from '@chakra-ui/react'
 import { ErrorBoundary } from 'react-error-boundary'
-
+import type { IconType } from 'react-icons';
 import {
   Box,
   VStack,
@@ -82,7 +82,6 @@ import {
   FiArrowUpRight,
   FiArrowDownRight,
   FiBarChart2,
-  FiBeaker,
   FiBox,
   FiCalendar,
   FiCheckCircle,
@@ -148,6 +147,9 @@ import {
 } from '@tremor/react'
 
 import { parseISO, isAfter, isBefore, startOfWeek, endOfWeek,subWeeks, isWithinInterval } from 'date-fns';
+import { ApexOptions } from 'apexcharts';
+
+
 
 const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false })
 const ModelPerformanceChart = dynamic(() => import('@/components/models/ModelPerformanceChart'), { 
@@ -332,7 +334,8 @@ const StatCard = memo(({
   detailContent,
   format = (v: number) => v.toString() 
 }: {
-  icon: React.ReactElement;
+  // icon: React.ReactElement;
+  icon: IconType;
   label: string;
   value: number;
   unit?: string;
@@ -344,7 +347,6 @@ const StatCard = memo(({
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
   return (
     <>
       <Box
@@ -374,7 +376,7 @@ const StatCard = memo(({
           <VStack align="stretch" spacing={4}>
             <HStack justify="space-between">
               <Icon 
-                as={icon.type} 
+                as={icon} 
                 color="orange.500" 
                 boxSize={6}
                 _groupHover={{ transform: 'scale(1.1)' }}
@@ -443,7 +445,7 @@ const StatCard = memo(({
         <ModalContent>
           <ModalHeader>
             <HStack>
-              <Icon as={icon.type} color="orange.500" boxSize={5} />
+              <Icon as={icon} color="orange.500" boxSize={5} />
               <Text>{label} 상세 정보</Text>
             </HStack>
           </ModalHeader>
@@ -484,7 +486,7 @@ interface MetricCardProps {
 const MetricCard = memo(({ title, value, delta, icon }: MetricCardProps) => {
   const cardBg = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.700')
-  const isDeltaPositive = delta > 0
+  const isDeltaPositive = typeof delta === 'number' && delta > 0;
 
   return (
     <Box
@@ -528,7 +530,9 @@ const MetricCard = memo(({ title, value, delta, icon }: MetricCardProps) => {
 MetricCard.displayName = 'MetricCard'
 
 // Error Fallback Component
-const ErrorFallback = ({ error, resetErrorBoundary }) => {
+import { FallbackProps } from 'react-error-boundary';
+
+const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   return (
     <Box
       p={4}
@@ -632,7 +636,7 @@ interface Model {
   updatedAt: string;
   servingStatus: {
     isDeployed: boolean;
-    health: string;
+    health: 'healthy' | 'error' | 'none' 
   };
 }
 
@@ -725,7 +729,11 @@ const ModelPerformance = memo(() => {
     
             const saved = localStorage.getItem('selectedModel');
             if (!saved && allModels.length > 0) {
-              const sortedModels = allModels.sort((a, b) => (b.version || 0) - (a.version || 0));
+              // const sortedModels = allModels.sort((a, b) => (b.version || 0) - (a.version || 0));
+              const sortedModels = allModels.sort((a: { version: string }, b: { version: string }) =>
+                parseFloat(b.version) - parseFloat(a.version)
+              );
+
               const defaultModel = sortedModels[0].name;
               setSelectedModel(defaultModel);
               localStorage.setItem('selectedModel', defaultModel);
@@ -790,9 +798,10 @@ const ModelPerformance = memo(() => {
   };
 
   // 차트 옵션 (이전과 동일)
+  
   const chartOptions = useMemo(() => ({
     chart: {
-      type: 'area',
+      type: 'area' as const,
       height: 400,
       toolbar: {
         show: true
@@ -854,7 +863,7 @@ const ModelPerformance = memo(() => {
           text: '정확도 (%)'
         },
         labels: {
-          formatter: function(value) {
+          formatter: function(value: number) {
             return `${value}%`;
           }
         }
@@ -865,7 +874,7 @@ const ModelPerformance = memo(() => {
           text: '손실'
         },
         labels: {
-          formatter: function (value) {
+          formatter: function (value: number) {
             return value.toFixed(5);
           },
           style: {
@@ -880,7 +889,7 @@ const ModelPerformance = memo(() => {
         show: false
       },
       y: {
-        formatter: function (value, { seriesIndex }) {
+        formatter: function (value: number, { seriesIndex }: { seriesIndex: number }) {
           if (seriesIndex === 1) {
             // 손실 (Loss)
             return value.toFixed(5);
@@ -893,8 +902,8 @@ const ModelPerformance = memo(() => {
       }
     },
     legend: {
-      position: 'top',
-      horizontalAlign: 'left',
+      position: 'top' as const,
+      horizontalAlign: 'left' as const,
       floating: false,
       fontSize: '13px',
       fontFamily: 'Pretendard',
@@ -911,8 +920,8 @@ const ModelPerformance = memo(() => {
         horizontal: 45,
         vertical: 0
       },
-      formatter: function(seriesName, opts) {
-        return ['   ' + seriesName + '   ']
+      formatter: function(seriesName: string) {
+        return `   ${seriesName}   `;
       }
     }
   }), []);
@@ -1145,22 +1154,44 @@ ModelPerformance.displayName = 'ModelPerformance'
 //     }
 //   ], [])
 import axios from 'axios';  // axios를 사용하여 API 호출
+export interface MonitoringItem {
+  time: string;
+  cpu: number;
+  cpu_core_total: number;
+  cpu_core_using: number;
+  memory: number;
+  storage: number;
+  gpu: {
+    gpu_name: string;
+    gpu_memory_total: string; // hoặc number nếu bạn convert "24564 MB" về số
+    gpu_memory_used: string;
+    gpu_memory_free: string;
+    gpu_utilization: string; // ví dụ: "7 %"
+  };
+}
 
-type ChartData = {
+export interface ChartData {
   name: string;
   data: number[];
-};
-
+  time?: string[]; // tuỳ chọn
+}
 const ResourceUsageStats = memo(() => {
   const [chartData, setChartData] = useState<ChartData[]>([]);  // 차트 데이터를 저장할 상태
 
-  const [cpuUsage, setCpuUsage] = useState(null); // CPU 사용량
-  const [cpuCoreTotal, setCpuCoreTotal] = useState(null); // 총 CPU 코어 수
-  const [cpuCoreUsing, setCpuCoreUsing] = useState(null); // 사용 중인 CPU 코어 수
+  // const [cpuUsage, setCpuUsage] = useState(null); // CPU 사용량
+  // const [cpuCoreTotal, setCpuCoreTotal] = useState(null); // 총 CPU 코어 수
+  // const [cpuCoreUsing, setCpuCoreUsing] = useState(null); // 사용 중인 CPU 코어 수
 
-  const [gpuUtilization, setGpuUtilization] = useState(null); // GPU 사용량
-  const [gpuName, setGpuName] = useState(null); // GPU 이름
-  const [gpuMemoryTotal, setGpuMemoryTotal] = useState(null); // GPU 총 메모리
+  // const [gpuUtilization, setGpuUtilization] = useState(null); // GPU 사용량
+  // const [gpuName, setGpuName] = useState(null); // GPU 이름
+  // const [gpuMemoryTotal, setGpuMemoryTotal] = useState(null); // GPU 총 메모리
+  const [cpuUsage, setCpuUsage] = useState<number>(0);
+  const [cpuCoreTotal, setCpuCoreTotal] = useState<number>(0);
+  const [cpuCoreUsing, setCpuCoreUsing] = useState<number>(0);
+
+  const [gpuUtilization, setGpuUtilization] = useState<string>('');
+  const [gpuName, setGpuName] = useState<string>('');
+  const [gpuMemoryTotal, setGpuMemoryTotal] = useState<string>('');
 
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -1168,7 +1199,7 @@ const ResourceUsageStats = memo(() => {
   const tooltipTheme = useColorModeValue('light', 'dark');
   const gridColor = useColorModeValue('#f1f1f1', '#2D3748');
 
-  const isToday = (timeString) => {
+  const isToday = (timeString: string) => {
     const currentDate = new Date();
     const timeDate = new Date(timeString);
     return (
@@ -1182,7 +1213,9 @@ const ResourceUsageStats = memo(() => {
   const fetchData = async () => {
     try {
       const response = await axios.get(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/resource-monitoring/dashboard`);
-      const data = response.data;
+      // const data = response.data;
+      const data: MonitoringItem[] = response.data;
+
       
   
       // 오늘 날짜에 해당하는 데이터만 필터링
@@ -1228,7 +1261,7 @@ const ResourceUsageStats = memo(() => {
   // 차트 옵션 설정
   const chartOptions = useMemo(() => ({
     chart: {
-      type: 'area',
+      type: 'area' as const,
       height: 350,
       toolbar: {
         show: true,
@@ -1243,11 +1276,11 @@ const ResourceUsageStats = memo(() => {
     },
     stroke: {
       width: [3, 3],
-      curve: 'smooth',
+      curve: 'smooth' as const,
     },
     colors: ['#FF6B00', '#1F2C5C'],
     fill: {
-      type: ['gradient', 'gradient'],
+      type: 'gradient',
       gradient: {
         shade: 'dark',
         type: 'vertical',
@@ -1308,7 +1341,7 @@ const ResourceUsageStats = memo(() => {
           fontSize: '12px',
           fontFamily: 'Pretendard',
         },
-        formatter: function (value) {
+        formatter: function (value: number) {
           return `${value}%`;  // Y축은 %로 표시
         },
       },
@@ -1317,7 +1350,7 @@ const ResourceUsageStats = memo(() => {
       enabled: true,
       theme: tooltipTheme,
       y: {
-        formatter: function (value) {
+        formatter: function (value: number) {
           return `${value}%`;  // 툴팁에 % 표시
         },
       },
@@ -1326,11 +1359,11 @@ const ResourceUsageStats = memo(() => {
       },
     },
     legend: {
-      position: 'top',
-      horizontalAlign: 'left',
+      position: 'top' as const,
+      horizontalAlign: 'left' as const,
       fontSize: '13px',
       fontFamily: 'Pretendard',
-      height: 40,
+      // height: 40,
       markers: {
         width: 12,
         height: 12,
@@ -1343,9 +1376,10 @@ const ResourceUsageStats = memo(() => {
         horizontal: 45,
         vertical: 0,
       },
-      formatter: function (seriesName, opts) {
-        return ['   ' + seriesName + '   '];  // 범례 항목에 여백 추가
-      },
+      // formatter: function (seriesName, opts) {
+      //   return ['   ' + seriesName + '   '];  // 범례 항목에 여백 추가
+      // },
+      formatter: (seriesName: string): string => `   ${seriesName}   `,
     },
   }), [labelColor, tooltipTheme, gridColor, chartData]);
 
@@ -1516,9 +1550,25 @@ const ResourceUsageStats = memo(() => {
 
 ResourceUsageStats.displayName = 'ResourceUsageStats'
 
+interface DatasetSplit {
+  train_set: number;
+  val_set: number;
+  test_set: number;
+  outside_set: number;
+}
+
+interface DatasetItem {
+  id: string;
+  name: string;
+  lastModified: string;
+  split_ratio?: DatasetSplit;
+  [key: string]: any; // cho phép phần dư
+}
+
+
 // 데이터셋 분포 차트 옵션
 const DatasetDistribution = memo(()=> {
-  const [datasetSplit, setDatasetSplit] = useState({
+  const [datasetSplit, setDatasetSplit] = useState<DatasetSplit>({
     train_set: 0,
     val_set: 0,
     test_set: 0,
@@ -1534,7 +1584,8 @@ const DatasetDistribution = memo(()=> {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/datasets/`)
         const data = await response.json()
-        const datasets = Object.values(data)
+        // const datasets = Object.values(data)
+        const datasets = Object.values(data) as DatasetItem[];
 
         if (datasets.length === 0) return
 
@@ -1542,7 +1593,9 @@ const DatasetDistribution = memo(()=> {
           return new Date(a.lastModified) > new Date(b.lastModified) ? a : b
         })
 
-        setDatasetSplit(latest.split_ratio || {})
+        if (latest.split_ratio) {
+          setDatasetSplit(latest.split_ratio)
+        }
       } catch (error) {
         console.error('Failed to fetch dataset split:', error)
       }
@@ -1584,7 +1637,7 @@ const DatasetDistribution = memo(()=> {
 
   const chartOptions = {
     chart: {
-      type: 'donut',
+      type: 'donut' as const,
       background: 'transparent',
       fontFamily: 'inherit',
       sparkline: {
@@ -1610,8 +1663,9 @@ const DatasetDistribution = memo(()=> {
               fontSize: '28px',
               fontWeight: 700,
               color: textColor,
-              formatter: function(val) {
-                return val.toLocaleString()
+              formatter: function(val: string) {
+                const num = parseFloat(val);
+                return isNaN(num) ? val : num.toLocaleString();
               }
             },
             total: {
@@ -1636,8 +1690,8 @@ const DatasetDistribution = memo(()=> {
     tooltip: {
       enabled: true,
       y: {
-        formatter: function(val) {
-          return val.toLocaleString() + ' 건'
+        formatter: function(val: number) {
+          return val.toLocaleString() + ' 건';
         }
       }
     }
@@ -1816,7 +1870,7 @@ const DatasetStats = memo(() => {
 
   // 데이터셋 유형별 분포 계산
   const typeDistribution = useMemo(() => {
-    const types = Object.values(datasets).reduce((acc, dataset) => {
+    const types = Object.values(datasets).reduce((acc: Record<string, number>, dataset) => {
       const type = dataset.type.toLowerCase()
       acc[type] = (acc[type] || 0) + 1
       return acc
@@ -1872,9 +1926,10 @@ const DatasetStats = memo(() => {
   }, [datasets, searchQuery, currentPage])
 
   // 차트 옵션
-  const distributionOptions = useMemo(() => ({
+  
+  const distributionOptions: ApexOptions = useMemo(() => ({
     chart: {
-      type: 'donut',
+      type: 'donut' as const,
       height: 200,
       animations: {
         enabled: true,
@@ -1898,14 +1953,14 @@ const DatasetStats = memo(() => {
     }),
     labels: Object.keys(summary.datasetTypes),
     legend: {
-      position: 'bottom',
+      position: 'bottom' as const,
       fontSize: '14px',
       fontFamily: 'Pretendard',
       markers: {
         width: 12,
         height: 12,
         radius: 6
-      },
+      } as any, // 👈 ép kiểu tại đây
       itemMargin: {
         horizontal: 15
       },
@@ -1937,16 +1992,17 @@ const DatasetStats = memo(() => {
         fontFamily: 'Pretendard'
       },
       y: {
-        formatter: function(val) {
+        formatter: function(val: number) {
           return Math.round(val) + '%'
         }
       }
     }
   }), []);
 
-  const qualityTrendOptions = useMemo(() => ({
+  // const qualityTrendOptions = useMemo(() => ({
+  const qualityTrendOptions: ApexOptions = useMemo(() => ({
     chart: {
-      type: 'line',
+      type: 'line' as const,
       height: 200,
       toolbar: { show: false },
       animations: {
@@ -2023,7 +2079,7 @@ const DatasetStats = memo(() => {
           fontSize: '12px',
           fontFamily: 'Pretendard'
         },
-        formatter: function(val) {
+        formatter: function(val: number) {
           return Math.round(val) + '%'
         }
       }
@@ -2036,8 +2092,11 @@ const DatasetStats = memo(() => {
       markers: {
         width: 12,
         height: 12,
-        radius: 6
-      },
+        radius: 6,
+        size: 12,
+        strokeWidth: 0,
+        shape: 'circle'
+      } as any,
       itemMargin: {
         horizontal: 15
       },
@@ -2052,7 +2111,7 @@ const DatasetStats = memo(() => {
         fontFamily: 'Pretendard'
       },
       y: {
-        formatter: function(val) {
+        formatter: function(val: number) {
           return Math.round(val) + '%'
         }
       }
@@ -2349,13 +2408,30 @@ interface Experiment {
   id: string
   name: string
   status: 'running' | 'completed' | 'failed'
-  startTime: string
-  endTime?: string
+  startTime: string | string[]         // tùy API trả string hay array
+  endTime?: string | string[] | null   // thường nullable
   metrics: {
     accuracy: number
     loss: number
   }
+  metrics_history?: {
+    trainAcc: number[]
+    valAcc: number[]
+    trainLoss: number[]
+    valLoss: number[]
+  }
+  hyperparameters?: {
+    learningRate: number
+    batchSize: number
+    epochs: number
+  }
+  createdAt?: string | string[]
+  updatedAt?: string | string[]
+  runtime?: string
+  timestamp?: string
+  description?: string
 }
+
 
 interface ResourceUsage {
   cpu: number
@@ -2376,6 +2452,55 @@ interface DatasetChange {
   changeText: string
   color: string
 }
+
+interface Dataset {
+  id: string
+  name: string
+  type: string
+  version: string
+  size: number
+  lastModified: string
+  createdAt: string
+  updatedAt: string
+  rows: number
+  records: number
+  columns: number
+  status: string
+  progress: number
+  tags: string[]
+  description: string
+  features: {
+    name: string
+    type: string
+    missing: number
+  }[]
+  split_ratio: {
+    train_set: number
+    val_set: number
+    test_set: number
+    outside_set: number
+  }
+  statistics: {
+    numerical: {
+      mean: number[]
+      std: number[]
+      min: number[]
+      max: number[]
+    }
+    categorical: {
+      unique: string[]
+      top: string[]
+      freq: string[]
+    }
+  }
+  quality: {
+    completeness: number
+    consistency: number
+    balance: number
+  }
+  qualityScore: number
+}
+
 
 // // API 호출 함수들
 // const fetchDashboardData = async () => {
@@ -2483,19 +2608,24 @@ interface DatasetChange {
 //   }
 // }
 
+
 const fetchDashboardData = async () => {
   try {
     // 실험 데이터 가져오기 API 호출
     const experimentsResponse = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/experiments/`);
-    const experimentsData = await experimentsResponse.json();
+    // const experimentsData = await experimentsResponse.json();
+    const experimentsData: Experiment[] = await experimentsResponse.json();
 
     // 모델 데이터 가져오기 API 호출
     const modelsResponse = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/models`);
-    const modelsData = await modelsResponse.json();
+    // const modelsData = await modelsResponse.json();
+    const modelsData: Model[] = await modelsResponse.json();
 
     // 데이터셋 데이터 가져오기 API 호출
     const datasetsResponse = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/datasets/`);
-    const datasetsData = await datasetsResponse.json();
+    // const datasetsData = await datasetsResponse.json();
+    const datasetsData: Record<string, Dataset> = await datasetsResponse.json();
+
 
     // 모델 데이터 변환
     const models = modelsData.map(model => ({
@@ -2517,10 +2647,16 @@ const fetchDashboardData = async () => {
       id: exp.id,
       name: exp.name,
       status: exp.status,
-      startTime: exp.startTime,
-      endTime: exp.endTime || null,
+      startTime: Array.isArray(exp.startTime) ? exp.startTime[0] : exp.startTime,
+      endTime: Array.isArray(exp.endTime) ? exp.endTime[0] : exp.endTime,
       metrics: exp.metrics,
-      updatedAt: exp.updatedAt
+      metrics_history: exp.metrics_history,
+      hyperparameters: exp.hyperparameters,
+      createdAt: Array.isArray(exp.createdAt) ? exp.createdAt[0] : exp.createdAt,
+      updatedAt: Array.isArray(exp.updatedAt) ? exp.updatedAt[0] : exp.updatedAt,
+      runtime: exp.runtime,
+      timestamp: exp.timestamp,
+      description: exp.description,
     }));
 
     // 데이터셋 통계 계산
@@ -2659,7 +2795,15 @@ const DatasetMetricCard = ({ label, value, unit }: { label: string; value: numbe
   )
 }
 
-const DashboardCard = ({ title, icon, children }) => {
+
+interface DashboardCardProps {
+  title: string;
+  icon?: any; // hoặc dùng: React.ElementType nếu bạn dùng <Icon as={icon}>
+  children: ReactNode;
+}
+
+
+const DashboardCard = ({ title, icon, children }: DashboardCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const borderColor = useColorModeValue('gray.200', 'gray.700');
 
@@ -2753,7 +2897,9 @@ export default function DashboardPage() {
   const experimentsThisWeek = experiments.filter(e => {
     if (e.status !== 'completed') return false;
 
-    const updated = parseISO(e.updatedAt); 
+    const updated = parseISO(
+      Array.isArray(e.updatedAt) ? e.updatedAt[0] : e.updatedAt || ''
+    );
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
@@ -2763,7 +2909,7 @@ export default function DashboardPage() {
 
 
   //Function to Calculate and compares weekly average accuracy of valid models.
-  function getModelAverageAccuracyStats(models) {
+  function getModelAverageAccuracyStats(models: Model[]) {
     const now = new Date();
   
     // Get the start of this week (Monday) and last week
@@ -2787,15 +2933,17 @@ export default function DashboardPage() {
     });
   
     // Helper to calculate average accuracy
-    const avg = (arr) =>
-      arr.length > 0 ? arr.reduce((sum, m) => sum + m.accuracy, 0) / arr.length : 0;
+    const avg = (arr: Model[]): number =>
+      arr.length > 0
+        ? arr.reduce((sum: number, m: Model) => sum + m.accuracy, 0)
+        : 0;
   
     const thisWeekAvg = avg(thisWeekModels);
     const lastWeekAvg = avg(lastWeekModels);
   
-    const change = (thisWeekAvg - lastWeekAvg).toFixed(1);
+    const change = thisWeekAvg - lastWeekAvg; // giữ kiểu number
     const isImproved = thisWeekAvg >= lastWeekAvg;
-    const changeText = `${Math.abs(change)}% ${isImproved ? "향상" : "감소"}`; //(지난주: ${lastWeekAvg.toFixed(1)}% → 이번주: ${thisWeekAvg.toFixed(1)}%)
+    const changeText = `${Math.abs(change).toFixed(1)}% ${isImproved ? "향상" : "감소"}`; // format sau khi Math.abs
     const color = isImproved ? "green" : "red";
   
     return {
@@ -2936,9 +3084,28 @@ export default function DashboardPage() {
 }
 
 // 최적화된 통계 카드 컴포넌트
-const StatsCard = memo(({ icon, title, value, unit, change, changeText, status, color }) => {
-  const bgColor = useColorModeValue('white', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.700')
+interface StatsCardProps {
+  icon: IconType;
+  title: string;
+  value: number | string;
+  unit?: string;
+  change?: number;
+  changeText?: string;
+  status?: string;
+  color?: string;
+}
+const StatsCard = memo(({
+  icon,
+  title,
+  value,
+  unit,
+  change,
+  changeText,
+  status,
+  color
+}: StatsCardProps) => {
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
 
   return (
     <Box
@@ -3022,7 +3189,13 @@ const NotificationCenter = memo(() => {
 })
 
 // 최적화된 알림 아이템 컴포넌트
-const NotificationItem = memo(({ type, title, description, time }) => {
+interface NotificationItemProps {
+  type: 'success' | 'warning' | 'info' | 'error'; // thêm các loại nếu cần
+  title: string;
+  description: string;
+  time: string;
+}
+const NotificationItem = memo(({ type, title, description, time }: NotificationItemProps) => {
   const bgColor = useColorModeValue(
     type === 'warning' ? 'orange.50' : 'green.50',
     'gray.700'
@@ -3054,7 +3227,12 @@ NotificationCenter.displayName = 'NotificationCenter'
 NotificationItem.displayName = 'NotificationItem'
 
 // 카드 헤더 컴포넌트 추가
-const CardHeader = memo(({ title, isOpen, onToggle }) => {
+interface CardHeaderProps {
+  title: string;
+  isOpen: boolean;
+  onToggle: () => void;
+}
+const CardHeader = memo(({ title, isOpen, onToggle }: CardHeaderProps) => {
   return (
     <HStack 
       justify="space-between" 
@@ -3081,10 +3259,16 @@ const CardHeader = memo(({ title, isOpen, onToggle }) => {
 CardHeader.displayName = 'CardHeader'
 
 // 접을 수 있는 카드 컴포넌트
-const CollapsibleCard = memo(({ title, children, defaultIsOpen = true }) => {
-  const [isOpen, setIsOpen] = useState(defaultIsOpen)
-  const bgColor = useColorModeValue('white', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.700')
+interface CollapsibleCardProps {
+  title: string;
+  children: ReactNode;
+  defaultIsOpen?: boolean;
+}
+
+const CollapsibleCard = memo(({ title, children, defaultIsOpen = true }: CollapsibleCardProps) => {
+  const [isOpen, setIsOpen] = useState(defaultIsOpen);
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
 
   return (
     <Box

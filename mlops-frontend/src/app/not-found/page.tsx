@@ -10,8 +10,8 @@ import {
   useColorModeValue,
   Image,
   Flex,
-  keyframes,
 } from '@chakra-ui/react'
+import { keyframes } from '@emotion/react'; // import keyframes từ @emotion/react
 import { FiHome, FiArrowLeft } from 'react-icons/fi'
 import { useRouter } from 'next/navigation'
 

@@ -57,7 +57,7 @@ const fs = require("fs");
 const app = express();
 
 // ✅ Read server URL from environment variable or fallback to local IP
-const serverUrl = process.env.NEXT_PUBLIC_SERVER_NODE_API || "http://192.168.219.52:4000";
+const serverUrl = process.env.NEXT_PUBLIC_SERVER_NODE_API || "http://localhost:4000";
 const parsedUrl = new URL(serverUrl);
 const HOST = "0.0.0.0"; // Allows access from any device on the LAN
 const PORT = parseInt(parsedUrl.port, 10) || 4000;

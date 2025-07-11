@@ -72,8 +72,11 @@ export default function DatasetDetailPage() {
       }
     };
 
-    if (params.id) {
-      fetchDataset(params.id); //
+    // if (params.id) {
+    //   fetchDataset(params.id); //
+    // }
+    if (params.id && typeof params.id === 'string') {
+      fetchDataset(params.id);
     }
   }, [params.id]);
 
@@ -298,7 +301,10 @@ export default function DatasetDetailPage() {
                 <TabPanels>
                   {/* 미리보기 탭 */}
                   <TabPanel>
-                    <DatasetPreview datasetId={params.id} />
+                    {/* <DatasetPreview datasetId={params.id} /> */}
+                    {typeof params.id === 'string' && (
+                      <DatasetPreview datasetId={params.id} />
+                    )}
                   </TabPanel>
 
                   {/* 통계 탭 */}
@@ -358,7 +364,10 @@ export default function DatasetDetailPage() {
 
                   {/* 버전 탭 */}
                   <TabPanel>
-                    <DatasetVersions datasetId={params.id} />
+                    {/* <DatasetVersions datasetId={params.id} /> */}
+                    {typeof params.id === 'string' && (
+                      <DatasetPreview datasetId={params.id} />
+                    )}
                   </TabPanel>
                 </TabPanels>
               </Tabs>

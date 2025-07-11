@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react';
 import {
   SimpleGrid,
   Box,
@@ -16,10 +16,14 @@ interface Dataset {
   id: string
   name: string
   type: string
+  description: string  // Thêm description
   size: number
   lastModified: string
   rows: number
   columns: number
+  status: string  // Thêm status
+  progress: number  // Thêm progress
+  tags: string[]
 }
 
 interface DatasetListProps {
@@ -42,6 +46,7 @@ export default function DatasetList({
   const bgColor = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.700')
   const textColor = useColorModeValue('gray.600', 'gray.300')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   if (!Array.isArray(datasets)) {
     return (
@@ -94,6 +99,7 @@ export default function DatasetList({
             onEdit={onEditDataset}
             onDelete={onDeleteDataset}
             onDownload={onDownloadDataset}
+            viewMode={viewMode}
           />
         ))}
       </SimpleGrid>

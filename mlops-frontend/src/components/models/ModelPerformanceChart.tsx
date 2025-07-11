@@ -13,7 +13,7 @@ const ModelPerformanceChart = () => {
   const chartOptions = useMemo(() => ({
     chart: {
       height: 350,
-      type: 'area',
+      type: 'area' as 'area',
       toolbar: {
         show: false
       },
@@ -31,7 +31,7 @@ const ModelPerformanceChart = () => {
     },
     stroke: {
       width: [3, 3],
-      curve: 'smooth'
+      curve: 'smooth' as 'smooth'
     },
     colors: ['#FF6B00', '#1F2C5C'],
     fill: {
@@ -101,7 +101,7 @@ const ModelPerformanceChart = () => {
           fontSize: '12px',
           fontFamily: 'Pretendard'
         },
-        formatter: function(value) {
+        formatter: function(value:number) {
           return `${value}%`
         }
       }
@@ -111,7 +111,7 @@ const ModelPerformanceChart = () => {
       shared: true,
       intersect: false,
       y: {
-        formatter: function(value) {
+        formatter: function(value:number) {
           return `${value}%`
         }
       },
@@ -120,8 +120,8 @@ const ModelPerformanceChart = () => {
       }
     },
     legend: {
-      position: 'top',
-      horizontalAlign: 'left',
+      position: 'top' as 'top',
+      horizontalAlign: 'left' as 'left',
       floating: false,
       fontSize: '13px',
       fontFamily: 'Pretendard',

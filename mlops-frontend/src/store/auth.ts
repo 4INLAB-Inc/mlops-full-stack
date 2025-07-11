@@ -22,30 +22,37 @@ interface AuthState {
   logout: () => void
 }
 
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   isLoading: false,
   login: async (credentials) => {
-    set({ isLoading: true })
+    set({ isLoading: true });
     try {
-      const { user, token } = await authApi.login(credentials)
-      localStorage.setItem('token', token)
-      set({ user, isAuthenticated: true })
+      const { user, token } = await authApi.login(credentials.email, credentials.password);
+      localStorage.setItem('token', token);  // Store the token
+      set({ user, isAuthenticated: true });
+    } catch (error) {
+      console.error('Login failed', error);
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
   register: async (userData) => {
-    set({ isLoading: true })
+    set({ isLoading: true });
     try {
-      await authApi.register(userData)
+      await authApi.register(userData);
+      // You may want to handle success (e.g., show a success message or auto-login)
+    } catch (error) {
+      console.error('Registration failed', error);
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
   logout: () => {
-    authApi.logout()
-    set({ user: null, isAuthenticated: false })
+    authApi.logout();
+    localStorage.removeItem('token');
+    set({ user: null, isAuthenticated: false });
   },
-}))
+}));

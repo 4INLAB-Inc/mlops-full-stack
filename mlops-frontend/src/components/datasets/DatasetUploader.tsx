@@ -66,7 +66,7 @@ export default function DatasetUploader({ isOpen, onClose }: DatasetUploaderProp
   const handleTagKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && currentTag.trim()) {
       e.preventDefault()
-      setTags(prev => [...new Set([...prev, currentTag.trim()])])
+      setTags(prev => [...Array.from(prev), currentTag.trim()])
       setCurrentTag('')
     }
   }

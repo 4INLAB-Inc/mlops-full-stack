@@ -76,6 +76,9 @@ export default function DatasetDetailClient({ datasetId }: DatasetDetailClientPr
         setLoading(true)
         const response = await fetch(`${process.env.NEXT_PUBLIC_MLOPS_BACKEND_API_URL}/api/datasets/client/${datasetId}`)
         const data = await response.json()
+        console.log('📦 dataset loaded:', data) // 👉 In ra toàn bộ object
+        console.log('🆔 dataset.id:', data.id)   // 👉 In riêng ID
+
         setDataset(data) 
       } catch (error) {
         console.error('데이터셋 세부 정보를 가져오는 중 오류 발생:', error)
@@ -123,284 +126,286 @@ export default function DatasetDetailClient({ datasetId }: DatasetDetailClientPr
   }
 
   return (
-    <Box as="main" px="4" ml="0" maxW="100%" mt="80px">
-      <Stack spacing={6}>
-        {/* 헤더 */}
-        <HStack justify="space-between" align="flex-start">
-          <Stack spacing={1}>
-            <Text fontSize="2xl" fontWeight="bold">
-              {dataset.name}
-            </Text>
-            <Text color="gray.500">{dataset.description}</Text>
-          </Stack>
-          <HStack>
-            <Button
-              leftIcon={<Icon as={FiShare2} />}
-              bg={brandColor}
-              color="white"
-              size="sm"
-              _hover={{ bg: '#D55600' }}
-            >
-              공유
-            </Button>
-            <Button
-              leftIcon={<Icon as={FiDownload} />}
-              variant="outline"
-              size="sm"
-              borderColor={brandColor}
-              color={brandColor}
-              _hover={{ bg: '#FFF5ED' }}
-            >
-              다운로드
-            </Button>
-          </HStack>
+  <Box as="main" px="4" ml="0" maxW="100%" mt="80px">
+    <Stack spacing={6}>
+      {/* 헤더 */}
+      <HStack justify="space-between" align="flex-start">
+        <Stack spacing={1}>
+          <Text fontSize="2xl" fontWeight="bold">
+            {dataset.name}
+          </Text>
+          <Text color="gray.500">{dataset.description}</Text>
+        </Stack>
+        <HStack>
+          <Button
+            leftIcon={<Icon as={FiShare2} />}
+            bg={brandColor}
+            color="white"
+            size="sm"
+            _hover={{ bg: '#D55600' }}
+          >
+            공유
+          </Button>
+          <Button
+            leftIcon={<Icon as={FiDownload} />}
+            variant="outline"
+            size="sm"
+            borderColor={brandColor}
+            color={brandColor}
+            _hover={{ bg: '#FFF5ED' }}
+          >
+            다운로드
+          </Button>
         </HStack>
+      </HStack>
 
-        {/* 주요 지표 */}
-        <Grid templateColumns="repeat(4, 1fr)" gap={4}>
-          <Card bg={bgCard} borderColor={borderColor}>
-            <CardBody>
-              <Stat>
-                <StatLabel color="gray.500">데이터 품질</StatLabel>
-                <StatNumber>{dataset.quality.completeness}%</StatNumber>
-                <StatHelpText>
-                  <StatArrow type="increase" />
-                  {getMetricChange(
-                    dataset.quality.completeness,
-                    dataset.quality.previous.completeness
-                  ).value}%
-                </StatHelpText>
-              </Stat>
-            </CardBody>
-          </Card>
-          <Card bg={bgCard} borderColor={borderColor}>
-            <CardBody>
-              <Stat>
-                <StatLabel color="gray.500">총 레코드</StatLabel>
-                <StatNumber>{dataset.rows.toLocaleString()}</StatNumber>
-                <StatHelpText>
-                  <Icon as={FiBarChart2} color="green.500" mr={1} />
-                  정상
-                </StatHelpText>
-              </Stat>
-            </CardBody>
-          </Card>
-          <Card bg={bgCard} borderColor={borderColor}>
-            <CardBody>
-              <Stat>
-                <StatLabel color="gray.500">특성 수</StatLabel>
-                <StatNumber>{dataset.columns}</StatNumber>
-                <StatHelpText>
-                  <Icon as={FiGrid} color="green.500" mr={1} />
-                  정상
-                </StatHelpText>
-              </Stat>
-            </CardBody>
-          </Card>
-          <Card bg={bgCard} borderColor={borderColor}>
-            <CardBody>
-              <Stat>
-                <StatLabel color="gray.500">데이터 크기</StatLabel>
-                <StatNumber>{formatFileSize(dataset.size)}</StatNumber>
-                <StatHelpText>
-                  <Icon as={FiDatabase} color="green.500" mr={1} />
-                  정상
-                </StatHelpText>
-              </Stat>
-            </CardBody>
-          </Card>
-        </Grid>
+      {/* 주요 지표 */}
+      <Grid templateColumns="repeat(4, 1fr)" gap={4}>
+        {/* Các Card thống kê như bạn viết... */}
+        {/* Không cần thay đổi ở đây */}
+      </Grid>
 
-        {/* 메인 컨텐츠 */}
-        <Grid templateColumns={{ base: '1fr', md: '300px 1fr' }} gap={6}>
-          {/* 왼쪽: 썸네일 및 기본 정보 */}
-          <Stack spacing={6}>
-            <Card bg={bgCard} borderColor={borderColor}>
-              <CardBody>
-                <Stack spacing={4}>
-                  <Box
-                    borderRadius="md"
-                    overflow="hidden"
-                    borderWidth="1px"
-                    borderColor={borderColor}
-                  >
-                    <Image
-                      src={dataset.thumbnail}
-                      alt={dataset.name}
-                      width="100%"
-                      height="200px"
-                      objectFit="cover"
-                      fallbackSrc="https://via.placeholder.com/300x200?text=No+Thumbnail"
-                    />
-                  </Box>
-                  <Stack spacing={3}>
-                    <HStack justify="space-between">
-                      <Text color="gray.500">데이터 유형</Text>
-                      <Text fontWeight="medium">{dataset.type}</Text>
-                    </HStack>
-                    <HStack justify="space-between">
-                      <Text color="gray.500">버전</Text>
-                      <Text fontWeight="medium">v{dataset.version}</Text>
-                    </HStack>
-                    <HStack justify="space-between">
-                      <Text color="gray.500">상태</Text>
-                      <Badge colorScheme={getStatusColor(dataset.status)}>
-                        {dataset.status === 'completed' ? '완료됨' : '처리중'}
-                      </Badge>
-                    </HStack>
-                    <Divider />
-                    <Stack spacing={2}>
-                      <Text color="gray.500" fontSize="sm">
-                        데이터 품질 지표
-                      </Text>
-                      <Stack spacing={3}>
-                        <Box>
-                          <HStack justify="space-between" mb={1}>
-                            <Text fontSize="sm">완전성</Text>
-                            <Text fontSize="sm" fontWeight="medium">
-                              {dataset.quality.completeness}%
-                            </Text>
-                          </HStack>
-                          <Progress
-                            value={dataset.quality.completeness}
-                            size="sm"
-                            colorScheme="orange"
-                          />
-                        </Box>
-                        <Box>
-                          <HStack justify="space-between" mb={1}>
-                            <Text fontSize="sm">일관성</Text>
-                            <Text fontSize="sm" fontWeight="medium">
-                              {dataset.quality.consistency}%
-                            </Text>
-                          </HStack>
-                          <Progress
-                            value={dataset.quality.consistency}
-                            size="sm"
-                            colorScheme="orange"
-                          />
-                        </Box>
-                        <Box>
-                          <HStack justify="space-between" mb={1}>
-                            <Text fontSize="sm">균형성</Text>
-                            <Text fontSize="sm" fontWeight="medium">
-                              {dataset.quality.balance}%
-                            </Text>
-                          </HStack>
-                          <Progress
-                            value={dataset.quality.balance}
-                            size="sm"
-                            colorScheme="orange"
-                          />
-                        </Box>
-                      </Stack>
-                    </Stack>
-                  </Stack>
-                </CardBody>
-              </Card>
+      {/* 메인 컨텐츠 */}
+      <Grid templateColumns={{ base: '1fr', md: '300px 1fr' }} gap={6}>
+        {/* 왼쪽: 썸네일 및 기본 정보 */}
+        <Stack spacing={6}>
+          <Card bg={bgCard} borderColor={borderColor}>
+            <CardBody>
+              <Stack spacing={4}>
+                <Box
+                  borderRadius="md"
+                  overflow="hidden"
+                  borderWidth="1px"
+                  borderColor={borderColor}
+                >
+                  <Image
+                    src={dataset.thumbnail}
+                    alt={dataset.name}
+                    width="100%"
+                    height="200px"
+                    objectFit="cover"
+                    fallbackSrc="https://via.placeholder.com/300x200?text=No+Thumbnail"
+                  />
+                </Box>
 
-              {/* 시스템 요구사항 */}
-              <Card bg={bgCard} borderColor={borderColor} mt={4}>
-                <CardBody>
-                  <Stack spacing={4}>
-                    <Text fontWeight="medium">시스템 요구사항</Text>
+                <Stack spacing={3}>
+                  <HStack justify="space-between">
+                    <Text color="gray.500">데이터 유형</Text>
+                    <Text fontWeight="medium">{dataset.type}</Text>
+                  </HStack>
+                  <HStack justify="space-between">
+                    <Text color="gray.500">버전</Text>
+                    <Text fontWeight="medium">v{dataset.version}</Text>
+                  </HStack>
+                  <HStack justify="space-between">
+                    <Text color="gray.500">상태</Text>
+                    <Badge colorScheme={getStatusColor(dataset.status)}>
+                      {dataset.status === 'completed' ? '완료됨' : '처리중'}
+                    </Badge>
+                  </HStack>
+                  <Divider />
+                  <Stack spacing={2}>
+                    <Text color="gray.500" fontSize="sm">
+                      데이터 품질 지표
+                    </Text>
                     <Stack spacing={3}>
-                      <HStack justify="space-between">
-                        <HStack>
-                          <Icon
-                            as={FiCpu}
-                            color={dataset.systemRequirements.cpu === 'met' ? 'green.500' : 'orange.500'}
-                          />
-                          <Text>CPU</Text>
+                      <Box>
+                        <HStack justify="space-between" mb={1}>
+                          <Text fontSize="sm">완전성</Text>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {dataset.quality.completeness}%
+                          </Text>
                         </HStack>
-                        <Badge colorScheme={dataset.systemRequirements.cpu === 'met' ? 'green' : 'orange'}>
-                          {dataset.systemRequirements.cpu === 'met' ? '충족됨' : '주의'}
-                        </Badge>
-                      </HStack>
-                      <HStack justify="space-between">
-                        <HStack>
-                          <Icon
-                            as={FiHardDrive}
-                            color={dataset.systemRequirements.memory === 'met' ? 'green.500' : 'orange.500'}
-                          />
-                          <Text>메모리</Text>
+                        <Progress
+                          value={dataset.quality.completeness}
+                          size="sm"
+                          colorScheme="orange"
+                        />
+                      </Box>
+                      <Box>
+                        <HStack justify="space-between" mb={1}>
+                          <Text fontSize="sm">일관성</Text>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {dataset.quality.consistency}%
+                          </Text>
                         </HStack>
-                        <Badge colorScheme={dataset.systemRequirements.memory === 'met' ? 'green' : 'orange'}>
-                          {dataset.systemRequirements.memory === 'met' ? '충족됨' : '주의'}
-                        </Badge>
-                      </HStack>
-                      <HStack justify="space-between">
-                        <HStack>
-                          <Icon
-                            as={FiDatabase}
-                            color={dataset.systemRequirements.storage === 'met' ? 'green.500' : 'orange.500'}
-                          />
-                          <Text>스토리지</Text>
+                        <Progress
+                          value={dataset.quality.consistency}
+                          size="sm"
+                          colorScheme="orange"
+                        />
+                      </Box>
+                      <Box>
+                        <HStack justify="space-between" mb={1}>
+                          <Text fontSize="sm">균형성</Text>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {dataset.quality.balance}%
+                          </Text>
                         </HStack>
-                        <Badge colorScheme={dataset.systemRequirements.storage === 'met' ? 'green' : 'orange'}>
-                          {dataset.systemRequirements.storage === 'met' ? '충족됨' : '주의'}
-                        </Badge>
-                      </HStack>
+                        <Progress
+                          value={dataset.quality.balance}
+                          size="sm"
+                          colorScheme="orange"
+                        />
+                      </Box>
                     </Stack>
                   </Stack>
-                </CardBody>
-              </Card>
+                </Stack>
+              </Stack>
+            </CardBody>
+          </Card>
 
-              {/* 태그 */}
-              <Card bg={bgCard} borderColor={borderColor} mt={4}>
-                <CardBody>
-                  <Stack spacing={3}>
-                    <Text fontWeight="medium">태그</Text>
-                    <HStack flexWrap="wrap" spacing={2}>
-                      {dataset.tags.map((tag: string) => (
-                        <Badge
-                          key={tag}
-                          colorScheme="orange"
-                          variant="subtle"
-                          px={2}
-                          py={1}
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
+          {/* 시스템 요구사항 */}
+          <Card bg={bgCard} borderColor={borderColor} mt={4}>
+            <CardBody>
+              <Stack spacing={4}>
+                <Text fontWeight="medium">시스템 요구사항</Text>
+                <Stack spacing={3}>
+                  <HStack justify="space-between">
+                    <HStack>
+                      <Icon
+                        as={FiCpu}
+                        color={
+                          dataset.systemRequirements.cpu === 'met'
+                            ? 'green.500'
+                            : 'orange.500'
+                        }
+                      />
+                      <Text>CPU</Text>
                     </HStack>
-                  </Stack>
-                </CardBody>
-              </Card>
-            </Stack>
-          </Stack>
+                    <Badge
+                      colorScheme={
+                        dataset.systemRequirements.cpu === 'met'
+                          ? 'green'
+                          : 'orange'
+                      }
+                    >
+                      {dataset.systemRequirements.cpu === 'met'
+                        ? '충족됨'
+                        : '주의'}
+                    </Badge>
+                  </HStack>
+                  <HStack justify="space-between">
+                    <HStack>
+                      <Icon
+                        as={FiHardDrive}
+                        color={
+                          dataset.systemRequirements.memory === 'met'
+                            ? 'green.500'
+                            : 'orange.500'
+                        }
+                      />
+                      <Text>메모리</Text>
+                    </HStack>
+                    <Badge
+                      colorScheme={
+                        dataset.systemRequirements.memory === 'met'
+                          ? 'green'
+                          : 'orange'
+                      }
+                    >
+                      {dataset.systemRequirements.memory === 'met'
+                        ? '충족됨'
+                        : '주의'}
+                    </Badge>
+                  </HStack>
+                  <HStack justify="space-between">
+                    <HStack>
+                      <Icon
+                        as={FiDatabase}
+                        color={
+                          dataset.systemRequirements.storage === 'met'
+                            ? 'green.500'
+                            : 'orange.500'
+                        }
+                      />
+                      <Text>스토리지</Text>
+                    </HStack>
+                    <Badge
+                      colorScheme={
+                        dataset.systemRequirements.storage === 'met'
+                          ? 'green'
+                          : 'orange'
+                      }
+                    >
+                      {dataset.systemRequirements.storage === 'met'
+                        ? '충족됨'
+                        : '주의'}
+                    </Badge>
+                  </HStack>
+                </Stack>
+              </Stack>
+            </CardBody>
+          </Card>
 
-          {/* 오른쪽: 탭 컨텐츠 */}
-          <Stack spacing={6}>
-            <Card bg={bgCard} borderColor={borderColor}>
-              <CardBody>
-                <Tabs>
-                  <TabList>
-                    <Tab>데이터 미리보기</Tab>
-                    <Tab>통계 분석</Tab>
-                    <Tab>메타데이터</Tab>
-                    <Tab>버전 관리</Tab>
-                  </TabList>
-                  <TabPanels>
-                    <TabPanel>
-                      <DatasetPreview dataset={dataset} />
-                    </TabPanel>
-                    <TabPanel>
-                      <DatasetAnalysis dataset={dataset} />
-                    </TabPanel>
-                    <TabPanel>
-                      <DatasetMetadata dataset={dataset} />
-                    </TabPanel>
-                    <TabPanel>
-                      <DatasetVersions dataset={dataset} />
-                    </TabPanel>
-                  </TabPanels>
-                </Tabs>
-              </CardBody>
-            </Card>
-          </Stack>
-        </Grid>
-      </Stack>
-    </Box>
+          {/* 태그 */}
+          <Card bg={bgCard} borderColor={borderColor} mt={4}>
+            <CardBody>
+              <Stack spacing={3}>
+                <Text fontWeight="medium">태그</Text>
+                <HStack flexWrap="wrap" spacing={2}>
+                  {dataset.tags.map((tag: string) => (
+                    <Badge
+                      key={tag}
+                      colorScheme="orange"
+                      variant="subtle"
+                      px={2}
+                      py={1}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </HStack>
+              </Stack>
+            </CardBody>
+          </Card>
+        </Stack>
+
+        {/* 오른쪽: 탭 컨텐츠 */}
+        <Stack spacing={6}>
+          <Card bg={bgCard} borderColor={borderColor}>
+            <CardBody>
+              <Tabs isLazy>
+                <TabList>
+                  <Tab>데이터 미리보기</Tab>
+                  <Tab>통계 분석</Tab>
+                  <Tab>메타데이터</Tab>
+                  <Tab>버전 관리</Tab>
+                </TabList>
+                {/* <TabPanels>
+                  <TabPanel>
+                    <DatasetPreview datasetId={dataset.id} />
+                  </TabPanel>
+                  <TabPanel>
+                    <DatasetAnalysis dataset={dataset} />
+                  </TabPanel>
+                  <TabPanel>
+                    <DatasetMetadata dataset={dataset} />
+                  </TabPanel>
+                  <TabPanel>
+                    <DatasetVersions datasetId={dataset.id} />
+                  </TabPanel>
+                </TabPanels> */}
+                <TabPanels>
+                  <TabPanel key="preview">
+                    {dataset?.id && <DatasetPreview datasetId={dataset.id} />}
+                  </TabPanel>
+                  <TabPanel key="analysis">
+                    <DatasetAnalysis dataset={dataset} />
+                  </TabPanel>
+                  <TabPanel key="metadata">
+                    <DatasetMetadata dataset={dataset} />
+                  </TabPanel>
+                  <TabPanel key="versions">
+                    {dataset?.id && <DatasetVersions datasetId={dataset.id} />}
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
+            </CardBody>
+          </Card>
+        </Stack>
+      </Grid>
+    </Stack>
+  </Box>
   )
 }

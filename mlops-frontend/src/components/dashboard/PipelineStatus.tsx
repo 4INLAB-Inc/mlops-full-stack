@@ -31,6 +31,7 @@ import { useState } from 'react'
 import PipelineCard from '../pipeline/PipelineCard'
 import DashboardSummary from './DashboardSummary'
 
+
 const mockPipelines = [
   {
     id: 1,
@@ -45,6 +46,7 @@ const mockPipelines = [
       memory: '16GB',
       gpu: '1 x T4',
     },
+    description: '이 모델은 이미지 분류 작업을 위한 모델입니다.',  // Thêm thuộc tính description
   },
   {
     id: 2,
@@ -59,6 +61,7 @@ const mockPipelines = [
       memory: '32GB',
       gpu: '2 x V100',
     },
+    description: '자연어 처리 모델을 위한 파이프라인입니다.',  // Thêm thuộc tính description
   },
   {
     id: 3,
@@ -73,6 +76,7 @@ const mockPipelines = [
       memory: '24GB',
       gpu: '1 x A100',
     },
+    description: '시계열 예측을 위한 모델입니다.',  // Thêm thuộc tính description
   },
   {
     id: 4,
@@ -87,8 +91,10 @@ const mockPipelines = [
       memory: '32GB',
       gpu: '2 x A100',
     },
+    description: '추천 시스템의 최신 버전입니다.',  // Thêm thuộc tính description
   },
 ]
+
 
 export default function PipelineStatus() {
   const [timeRange, setTimeRange] = useState('1w')

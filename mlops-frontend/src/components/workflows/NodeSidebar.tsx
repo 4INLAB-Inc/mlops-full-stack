@@ -5,6 +5,7 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  InputRightElement,
   Text,
   Accordion,
   AccordionItem,
@@ -36,6 +37,7 @@ import {
 } from '@chakra-ui/react'
 import { FiSearch, FiPlus, FiDatabase, FiLayers, FiGitBranch, FiCpu, FiBarChart2, FiActivity, FiCloud, FiCheckCircle, FiPieChart, FiGitCommit, FiX } from 'react-icons/fi'
 import { Node } from 'reactflow'
+
 
 interface NodeTemplate {
   type: string
@@ -274,11 +276,18 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
   const nodeBg = useColorModeValue('gray.100', 'gray.700')
 
   const allNodes = [...defaultNodeTemplates, ...customNodes]
+  interface NodeType {
+    type: string;
+    label: string;
+    category: string;
+    icon: React.ElementType;  // Kiểu cho icon, giả sử bạn sử dụng React component
+    desc: string;
+  }
 
   const filteredNodes = useMemo(() => {
     if (!searchQuery) return null;
     const query = searchQuery.toLowerCase();
-    const results = [];
+    const results: NodeType[] = [];
     
     const nodeTypes = [
       { type: 'data_collection', label: '데이터 수집', category: '데이터 처리', icon: FiDatabase, desc: '데이터 소스에서 데이터를 수집합니다' },
@@ -401,7 +410,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                 key={node.type}
                 p={3}
                 bg={nodeBg}
-                _dark={{ bg: 'gray.700' }}
+                _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                 borderRadius="md"
                 cursor="grab"
                 draggable
@@ -418,7 +427,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                 }}
                 border="1px dashed"
                 borderColor="gray.200"
-                _dark={{ borderColor: 'gray.600' }}
+                // _dark={{ borderColor: 'gray.600' }}
                 w="full"
               >
                 <HStack spacing={3}>
@@ -460,7 +469,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -477,7 +486,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>
@@ -491,7 +500,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -508,7 +517,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>
@@ -522,7 +531,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -539,7 +548,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>
@@ -553,7 +562,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -570,7 +579,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>
@@ -605,7 +614,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -622,7 +631,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>
@@ -636,7 +645,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -653,7 +662,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>
@@ -667,7 +676,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -684,7 +693,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>
@@ -719,7 +728,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -736,7 +745,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>
@@ -750,7 +759,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -767,7 +776,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>
@@ -781,7 +790,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                   <Box
                     p={3}
                     bg={nodeBg}
-                    _dark={{ bg: 'gray.700' }}
+                    _dark={{ bg: 'gray.700', borderColor: 'gray.600' }} 
                     borderRadius="md"
                     cursor="grab"
                     draggable
@@ -798,7 +807,7 @@ const NodeSidebar: React.FC<NodeSidebarProps> = ({ onDragStart = () => {}, onAdd
                     }}
                     border="1px dashed"
                     borderColor="gray.200"
-                    _dark={{ borderColor: 'gray.600' }}
+                    // _dark={{ borderColor: 'gray.600' }}
                     w="full"
                   >
                     <HStack spacing={3}>

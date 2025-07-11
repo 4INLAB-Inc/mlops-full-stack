@@ -202,6 +202,7 @@ def prepare_time_series_data(data: pd.DataFrame, sequences: int, target_col: str
     y = np.nan_to_num(y, nan=0.0, posinf=0.0, neginf=0.0)
 
     logger.info(f"✅ Data preparation complete: X shape={X.shape}, y shape={y.shape}")
+    logger.info(f"Target min: {data[target_col].min()}, max: {data[target_col].max()}, unique: {data[target_col].nunique()}")
     return X, y, scaler
 
 

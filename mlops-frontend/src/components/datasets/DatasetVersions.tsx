@@ -419,9 +419,9 @@ export function DatasetVersions({ datasetId }: DatasetVersionsProps) {
                             <Progress
                               value={selectedVersion.quality?.completeness}
                               colorScheme={
-                                selectedVersion.quality?.completeness >= 95
+                                selectedVersion.quality?.completeness !== undefined && selectedVersion.quality?.completeness >= 95
                                   ? 'green'
-                                  : selectedVersion.quality?.completeness >= 80
+                                  : selectedVersion.quality?.completeness !== undefined && selectedVersion.quality?.completeness >= 80
                                   ? 'orange'
                                   : 'red'
                               }
@@ -437,9 +437,9 @@ export function DatasetVersions({ datasetId }: DatasetVersionsProps) {
                             <Progress
                               value={selectedVersion.quality?.consistency}
                               colorScheme={
-                                selectedVersion.quality?.consistency >= 95
+                                selectedVersion.quality?.consistency !== undefined && selectedVersion.quality?.consistency >= 95
                                   ? 'green'
-                                  : selectedVersion.quality?.consistency >= 80
+                                  : selectedVersion.quality?.consistency !== undefined && selectedVersion.quality?.consistency >= 80
                                   ? 'orange'
                                   : 'red'
                               }
@@ -455,9 +455,9 @@ export function DatasetVersions({ datasetId }: DatasetVersionsProps) {
                             <Progress
                               value={selectedVersion.quality?.balance}
                               colorScheme={
-                                selectedVersion.quality?.balance >= 95
+                                selectedVersion.quality?.balance !== undefined && selectedVersion.quality?.balance >= 95
                                   ? 'green'
-                                  : selectedVersion.quality?.balance >= 80
+                                  : selectedVersion.quality?.balance !== undefined && selectedVersion.quality?.balance >= 80
                                   ? 'orange'
                                   : 'red'
                               }

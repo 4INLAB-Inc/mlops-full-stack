@@ -67,7 +67,7 @@ export interface DecisionSupport {
   recommendation: string;
   confidence: number;
   impact: 'high' | 'medium' | 'low';
-  category: 'irrigation' | 'nutrition' | 'environment' | 'pest';
+  category: 'irrigation' | 'nutrition' | 'environment' | 'pest' | 'ventilation';
   suggestedActions: string[];
   expectedOutcome: string;
 }

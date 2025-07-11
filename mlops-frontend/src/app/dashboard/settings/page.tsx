@@ -337,6 +337,27 @@ export default function SettingsPage() {
             fontWeight="medium"
             transition="all 0.2s"
           >활동 로그</Tab>
+
+          <Tab 
+            px={4}
+            py={3}
+            _selected={{ 
+              color: 'orange.500',
+              borderBottom: '2px solid',
+              borderColor: 'orange.500',
+            }}
+            _hover={{
+              color: 'orange.400',
+            }}
+            _focus={{
+              outline: 'none',
+              boxShadow: 'none',
+            }}
+            fontWeight="medium"
+            transition="all 0.2s"
+          >정보</Tab>
+
+          
         </TabList>
 
         <TabPanels>
@@ -813,6 +834,69 @@ export default function SettingsPage() {
               </CardBody>
             </Card>
           </TabPanel>
+
+          {/* 정보 (About) */}
+          <TabPanel>
+            <Card>
+              <CardHeader>
+                <Box width="100%">
+                  <Flex justify="flex-start" align="center">
+                    <img src="/mlops_logo.png" alt="MLOps 로고" style={{ height: "150px", width: "auto" }} />
+                  </Flex>
+
+                  <Box textAlign="right" mt={2}>
+                    <Text fontSize="sm" color="black.600">
+                      설치 일시: 2025.05.27 16:02:50
+                    </Text>
+                  </Box>
+                </Box>
+              </CardHeader>
+
+              <Divider />
+
+              <CardBody>
+                <Grid templateColumns={{ base: "1fr", md: "150px 1fr" }} gap={2} fontSize="sm">
+                  <Text fontWeight="bold">제품 이름</Text>
+                  <Text> 4IN-MLOps Platform </Text>
+                  <Text fontWeight="bold">Copyright</Text>
+                  <Text> © 2025 (주)포인랩 / 4INLAB INC.</Text>
+                </Grid>
+              </CardBody>
+
+              <Divider />
+
+              <CardBody>
+                <Grid templateColumns={{ base: "1fr", md: "150px 1fr" }} gap={2} fontSize="sm">
+                
+                  <Text fontWeight="bold">버전</Text>
+                  <Text>1.0.2 (2025.04.30)</Text>
+
+                  <Text fontWeight="bold">에디션</Text>
+                  <Text>Professional</Text>
+
+                  <Text fontWeight="bold">라이선스</Text>
+                  <Text>4I-MLOPS-PRO-202505</Text>
+
+                  <Text fontWeight="bold">라이선스 만료일</Text>
+                  <Text>없음</Text>
+
+                  <Text fontWeight="bold">시스템</Text>
+                  <Text>Docker 컨테이너 (Windows 11 기반)</Text>
+
+                  <Text fontWeight="bold">호스트</Text>
+                  <Text>Local host - 10.100.39.409</Text>
+
+                  <Text fontWeight="bold">사용자 이름</Text>
+                  <Text>국립창원대학교</Text>
+
+                  <Text fontWeight="bold">워크그룹</Text>
+                  <Text>N/A</Text>
+                </Grid>
+              </CardBody>
+            </Card>
+          </TabPanel>
+
+
         </TabPanels>
       </Tabs>
 

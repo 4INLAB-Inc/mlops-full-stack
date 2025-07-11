@@ -36,6 +36,10 @@ interface NavItem {
   href?: string
 }
 
+interface HeaderProps {
+  onMenuClick: () => void
+}
+
 const NAV_ITEMS: Array<NavItem> = [
   {
     label: 'Dashboard',
@@ -66,7 +70,7 @@ const NAV_ITEMS: Array<NavItem> = [
   },
 ]
 
-export default function Header() {
+export default function Header({ onMenuClick }: HeaderProps) {
   const { isOpen, onToggle } = useDisclosure()
   const { colorMode, toggleColorMode } = useColorMode()
 

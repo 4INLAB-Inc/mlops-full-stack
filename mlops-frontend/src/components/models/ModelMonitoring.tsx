@@ -22,6 +22,8 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react'
 import { FiTrendingUp } from 'react-icons/fi'
+import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+
 
 const data = [
   {

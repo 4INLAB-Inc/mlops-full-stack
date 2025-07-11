@@ -133,12 +133,12 @@ const styles = {
       color: props.colorMode === 'dark' ? 'white' : 'text.primary',
     },
   }),
-  global: {
-    body: {
-      bg: 'gray.50',
-      color: 'gray.800',
-    },
-  },
+  // global: {
+  //   body: {
+  //     bg: 'gray.50',
+  //     color: 'gray.800',
+  //   },
+  // },
 }
 
 const theme = extendTheme({

@@ -60,6 +60,10 @@ interface DatasetCardProps {
   viewMode: 'grid' | 'list'
   isSelected: boolean
   onSelect: () => void
+  onEdit?: (id: string) => void  // Chắc chắn có onEdit
+  onDelete?: (id: string) => void
+  onDownload?: (id: string) => void
+  
 }
 
 export function DatasetCard({ dataset, viewMode, isSelected, onSelect }: DatasetCardProps) {

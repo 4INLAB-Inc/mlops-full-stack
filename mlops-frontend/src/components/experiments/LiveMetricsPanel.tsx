@@ -41,16 +41,17 @@ export function LiveMetricsPanel({ experimentId }: Props) {
                 <LineChart
                   data={[
                     {
-                      name: '학습',
-                      data: (metrics.trainAcc ?? []).map((v: number, i: number) => ({ x: i + 1, y: v }))
+                      name: '학습', // Training accuracy
+                      data: metrics.trainAcc ?? [],  // Dữ liệu cho trục y của "학습"
                     },
                     {
-                      name: '검증',
-                      data: (metrics.valAcc ?? []).map((v: number, i: number) => ({ x: i + 1, y: v }))
+                      name: '검증', // Validation accuracy
+                      data: metrics.valAcc ?? [],  // Dữ liệu cho trục y của "검증"
                     }
                   ]}
-                  xLabel="Epoch"
-                  yLabel="Accuracy (%)"
+                  xLabel="Epoch"  // Nhãn trục x
+                  yLabel="Accuracy (%)"  // Nhãn trục y
+                  categories={metrics.trainAcc?.map((_, index) => (index + 1).toString())}  // Chuyển số thành chuỗi
                 />
               </Box>
             </Stack>
@@ -68,15 +69,16 @@ export function LiveMetricsPanel({ experimentId }: Props) {
                   data={[
                     {
                       name: '학습',
-                      data: (metrics.trainLoss ?? []).map((v: number, i: number) => ({ x: i + 1, y: v }))
+                      data: (metrics.trainLoss ?? [])
                     },
                     {
                       name: '검증',
-                      data: (metrics.valLoss ?? []).map((v: number, i: number) => ({ x: i + 1, y: v }))
+                      data: (metrics.valLoss ?? [])
                     }
                   ]}
                   xLabel="Epoch"
                   yLabel="Loss"
+                  categories={metrics.trainLoss?.map((_, index) => (index + 1).toString())}  // Chuyển số thành chuỗi cho categories
                 />
               </Box>
             </Stack>

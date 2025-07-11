@@ -285,24 +285,38 @@ export default function ModelDetailClient({ modelId }: ModelDetailClientProps) {
                                     </Text>
                                     <HStack spacing={2}>
                                       <Text fontWeight="bold">
-                                        {typeof value === 'number' ? value.toFixed(3) : value}
+                                        {/* {typeof value === 'number' ? value.toFixed(3) : value} */}
+                                        {typeof value === 'number' ? (value as number).toFixed(3) : (value as string)}
                                       </Text>
                                       {modelData.previousMetrics && modelData.previousMetrics[key] && (
                                         <Badge
-                                          colorScheme={value > modelData.previousMetrics[key] ? 'green' : 'red'}
+                                          // colorScheme={value > modelData.previousMetrics[key] ? 'green' : 'red'}
+                                          colorScheme={
+                                            (value as number) > (modelData.previousMetrics[key] as number)
+                                              ? 'green'
+                                              : 'red'
+                                          }
                                           fontSize="xs"
                                           display="flex"
                                           alignItems="center"
                                         >
                                           <Icon
-                                            as={value > modelData.previousMetrics[key] ? FiTrendingUp : FiTrendingDown}
+                                            // as={value > modelData.previousMetrics[key] ? FiTrendingUp : FiTrendingDown}
+                                            as={(value as number) > (modelData.previousMetrics[key] as number)
+                                                ? FiTrendingUp
+                                                : FiTrendingDown}
                                             mr={1}
                                           />
-                                          {(
+                                          {/* {(
                                             ((value - modelData.previousMetrics[key]) /
                                               modelData.previousMetrics[key]) *
                                             100
-                                          ).toFixed(1)}
+                                          ).toFixed(1)} */}
+                                          {(
+                                              (((value as number) - (modelData.previousMetrics[key] as number)) /
+                                                (modelData.previousMetrics[key] as number)) *
+                                              100
+                                            ).toFixed(1)}
                                           %
                                         </Badge>
                                       )}

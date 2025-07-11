@@ -59,6 +59,7 @@ export const datasetApi = {
   update: (id: string, data: any) => api.put(`/api/datasets/${id}`, data),
   delete: (id: string) => api.delete(`/api/datasets/${id}`),
   getStats: (id: string) => api.get(`/api/datasets/${id}/stats`),
+  analyze: (id: string) => api.post(`/api/datasets/${id}/analyze`),
 }
 
 // 모델 관련 API
@@ -77,3 +78,21 @@ export const settingsApi = {
   get: () => api.get('/api/settings'),
   update: (data: any) => api.put('/api/settings', data),
 }
+
+
+// authApi.js or authApi.ts
+export const authApi = {
+  login: async (email: string, password: string) => {
+    // Perform login request with email and password
+    const response = await api.post('/api/auth/login', { email, password });
+    
+    // Assuming the response data contains the 'user' and 'token'
+    return response.data;  // This will return the data, not the entire AxiosResponse
+  },
+  logout: () => api.post('/api/auth/logout'),
+  // Define the register method if it is missing
+  register: async (userData: any) => {
+    const response = await api.post('/api/auth/register', userData);
+    return response.data;
+  }
+};

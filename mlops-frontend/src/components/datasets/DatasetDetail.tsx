@@ -44,9 +44,9 @@ interface ColumnStats {
 export function DatasetDetail({ datasetId }: DatasetDetailProps) {
   const toast = useToast()
 
-  const { data: dataset } = useQuery({
+  const { data: dataset, isLoading, error } = useQuery({
     queryKey: ['dataset', datasetId],
-    queryFn: () => datasetApi.analyze(datasetId),
+    queryFn: () => datasetApi.getById(datasetId), // Giả sử bạn sử dụng getById thay vì analyze
   })
 
   const handleDelete = async () => {
@@ -67,15 +67,19 @@ export function DatasetDetail({ datasetId }: DatasetDetailProps) {
     }
   }
 
-  if (!dataset) return null
+  // Kiểm tra xem dataset có được tải thành công không
+  if (isLoading) return <Text>Loading...</Text>
+  if (error) return <Text>Error loading dataset</Text>
+  if (!dataset?.data) return <Text>No dataset found</Text> 
 
   return (
     <Box>
       <Flex justify="space-between" align="center" mb={6}>
         <Box>
-          <Heading size="lg">{dataset.name}</Heading>
+          {/* Truy cập dataset.data thay vì dataset trực tiếp */}
+          <Heading size="lg">{dataset.data.name || 'No name available'}</Heading>
           <Text color="gray.600" mt={1}>
-            {dataset.description || '설명 없음'}
+            {dataset.data.description || '설명 없음'}
           </Text>
         </Box>
         <Flex gap={2}>
@@ -110,7 +114,7 @@ export function DatasetDetail({ datasetId }: DatasetDetailProps) {
             총 행 수
           </Text>
           <Text fontSize="2xl" fontWeight="bold">
-            {dataset.stats.rowCount.toLocaleString()}
+            {dataset.data.stats.rowCount.toLocaleString()}
           </Text>
         </Box>
         <Box p={4} bg="white" rounded="lg" shadow="sm">
@@ -118,7 +122,7 @@ export function DatasetDetail({ datasetId }: DatasetDetailProps) {
             총 열 수
           </Text>
           <Text fontSize="2xl" fontWeight="bold">
-            {dataset.stats.columnCount.toLocaleString()}
+            {dataset.data.stats.columnCount.toLocaleString()}
           </Text>
         </Box>
         <Box p={4} bg="white" rounded="lg" shadow="sm">
@@ -126,7 +130,7 @@ export function DatasetDetail({ datasetId }: DatasetDetailProps) {
             결측값
           </Text>
           <Text fontSize="2xl" fontWeight="bold">
-            {dataset.stats.missingValues.toLocaleString()}
+            {dataset.data.stats.missingValues.toLocaleString()}
           </Text>
         </Box>
         <Box p={4} bg="white" rounded="lg" shadow="sm">
@@ -134,7 +138,7 @@ export function DatasetDetail({ datasetId }: DatasetDetailProps) {
             파일 크기
           </Text>
           <Text fontSize="2xl" fontWeight="bold">
-            {(dataset.size / 1024 / 1024).toFixed(2)} MB
+            {(dataset.data.size / 1024 / 1024).toFixed(2)} MB
           </Text>
         </Box>
       </Grid>
@@ -164,7 +168,7 @@ export function DatasetDetail({ datasetId }: DatasetDetailProps) {
 
           <TabPanel>
             <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-              {dataset.columns.map((column: ColumnStats) => (
+              {dataset.data.columns.map((column: ColumnStats) => (
                 <Box
                   key={column.name}
                   p={4}
@@ -216,7 +220,7 @@ export function DatasetDetail({ datasetId }: DatasetDetailProps) {
 
           <TabPanel>
             <Grid templateColumns="1fr" gap={4}>
-              {dataset.columns.map((column: ColumnStats) => (
+              {dataset.data.columns.map((column: ColumnStats) => (
                 <Box
                   key={column.name}
                   p={4}

@@ -28,8 +28,8 @@ dataset:
     # date_col: TransactionDate  # Column containing date information
     # target_col: Stock  # Target column
     # time_step: 30  # Specify the number of time steps
-    date_col: Date  # Column containing date information
-    target_col: ITEM001  # Target column
+    date_col: datetime  # Column containing date information
+    target_col: active_power  # Target column
     sequences: 672
     ds_author: 박진제
     ds_description: 미광금속에 전체 공장의 전력데이터셋 입니다

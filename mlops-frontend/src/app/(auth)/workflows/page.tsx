@@ -46,8 +46,8 @@ import {
 } from 'react-icons/fi'
 import 'reactflow/dist/style.css'
 
-import { WorkflowNode } from '@/components/workflows/WorkflowNode'
-import { WorkflowSidebar } from '@/components/workflows/WorkflowSidebar'
+import WorkflowNode from '@/components/workflows/WorkflowNode'
+import WorkflowSidebar from '@/components/workflows/WorkflowSidebar'
 
 const nodeTypes = {
   workflow: WorkflowNode,
@@ -89,6 +89,12 @@ export default function WorkflowsPage() {
   const textColor = useColorModeValue('gray.600', 'gray.400')
   const headingColor = useColorModeValue('gray.800', 'white')
   const accentColor = '#EB6100'
+
+  const onNodeAction = (action: 'run' | 'stop' | 'delete', nodeId: string) => {
+    // Xử lý các hành động cho node
+    console.log(action, nodeId);
+  };
+
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -200,7 +206,7 @@ export default function WorkflowsPage() {
                     onConnect={onConnect}
                     onDragOver={onDragOver}
                     onDrop={onDrop}
-                    nodeTypes={nodeTypes}
+                    // nodeTypes={nodeTypes}
                     fitView
                     attributionPosition="bottom-right"
                   >

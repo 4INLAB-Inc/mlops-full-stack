@@ -50,6 +50,8 @@ import {
   Tooltip,
   useToast,
 } from '@chakra-ui/react'
+
+
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, AreaChart, Area } from 'recharts'
 import { FiCpu, FiDatabase, FiGitBranch, FiServer, FiThermometer, FiDroplet, FiSun, FiWind, FiActivity, FiTrendingUp, FiAlertCircle, FiCheckCircle, FiMoreVertical, FiRefreshCw, FiDownload, FiSettings } from 'react-icons/fi'
 import { useState, useEffect } from 'react'
@@ -106,24 +108,24 @@ const generateDecisionSupport = () => {
     {
       recommendation: '관수량 조절 필요',
       confidence: 85 + (Math.random() * 10 - 5),
-      impact: 'high',
-      category: 'irrigation',
+      impact: 'high' as const,
+      category: 'irrigation' as const,
       suggestedActions: ['시간당 수분 공급량 20% 증가', '토양 수분 모니터링 주기 단축'],
       expectedOutcome: '생육 스트레스 감소 및 수확량 10% 증가',
     },
     {
       recommendation: '질소 영양분 보충',
       confidence: 82 + (Math.random() * 10 - 5),
-      impact: 'medium',
-      category: 'nutrition',
+      impact: 'medium' as const,
+      category: 'nutrition' as const,
       suggestedActions: ['질소 비료 추가 공급', '잎 색상 변화 모니터링'],
       expectedOutcome: '잎 성장 촉진 및 광합성 효율 15% 향상',
     },
     {
       recommendation: '환기 시스템 가동',
       confidence: 88 + (Math.random() * 10 - 5),
-      impact: 'medium',
-      category: 'ventilation',
+      impact: 'medium' as const,
+      category: 'ventilation' as const,
       suggestedActions: ['환기 시스템 가동 시간 30분 연장', 'CO2 농도 모니터링'],
       expectedOutcome: '작물 호흡 환경 개선 및 생산성 8% 향상',
     }
@@ -203,16 +205,35 @@ const generateDeploymentData = () => {
 };
 
 export default function MonitoringPage() {
+  // const [environment, setEnvironment] = useState<CropEnvironment>({
+  //   temperature: 0,
+  //   humidity: 0,
+  //   co2: 0,
+  // })
   const [environment, setEnvironment] = useState<CropEnvironment>({
     temperature: 0,
     humidity: 0,
     co2: 0,
+    light: 0,
+    soilMoisture: 0,
+    nutrientLevel: 0,
+    lastUpdated: new Date().toISOString(), // hoặc '' nếu string
   })
+  // const [growthMetrics, setGrowthMetrics] = useState<CropGrowthMetrics>({
+  //   growthStage: '',
+  //   healthScore: 0,
+  //   predictedYield: 0,
+  //   height: 0,
+  // })
   const [growthMetrics, setGrowthMetrics] = useState<CropGrowthMetrics>({
     growthStage: '',
     healthScore: 0,
     predictedYield: 0,
     height: 0,
+    leafArea: 0,
+    stemDiameter: 0,
+    fruitCount: 0,
+    lastMeasured: new Date().toISOString(), // hoặc ''
   })
   const [environmentHistory, setEnvironmentHistory] = useState<Array<any>>([])
   const [decisionSupport, setDecisionSupport] = useState<DecisionSupport[]>([])
@@ -521,7 +542,7 @@ export default function MonitoringPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="time" />
                       <YAxis />
-                      <Tooltip />
+                      <RechartsTooltip />
                       <Line type="monotone" dataKey="temperature" stroke="#48BB78" name="온도" />
                       <Line type="monotone" dataKey="humidity" stroke="#4299E1" name="습도" />
                       <Line type="monotone" dataKey="co2" stroke="#F56565" name="CO₂" />
@@ -586,7 +607,7 @@ export default function MonitoringPage() {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="timestamp" />
                           <YAxis />
-                          <Tooltip />
+                          <RechartsTooltip />
                           <Line type="monotone" dataKey="metrics.accuracy" stroke="#48BB78" name="예측 정확도" />
                           <Line type="monotone" dataKey="metrics.f1Score" stroke="#4299E1" name="F1 Score" />
                         </LineChart>
@@ -702,7 +723,7 @@ export default function MonitoringPage() {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="timestamp" tick={{ fontSize: 10 }} />
                           <YAxis domain={[85, 100]} tick={{ fontSize: 10 }} />
-                          <Tooltip />
+                          <RechartsTooltip />
                           <Line 
                             type="monotone" 
                             dataKey="metrics.accuracy" 
@@ -854,7 +875,7 @@ export default function MonitoringPage() {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="technique" />
                           <YAxis />
-                          <Tooltip />
+                          <RechartsTooltip />
                           <Bar dataKey="speedup" name="속도 향상" fill="#ED8936" />
                           <Bar dataKey="accuracyDrop" name="정확도 감소" fill="#F56565" />
                         </BarChart>
@@ -1003,7 +1024,7 @@ export default function MonitoringPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="technique" />
                         <YAxis />
-                        <Tooltip />
+                        <RechartsTooltip />
                         <Bar dataKey="speedup" name="속도 향상" fill="#48BB78" />
                         <Bar dataKey="accuracyDrop" name="정확도 감소" fill="#F56565" />
                       </BarChart>

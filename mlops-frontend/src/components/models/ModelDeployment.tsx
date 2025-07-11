@@ -825,6 +825,7 @@ import {
   AlertDialogContent,
   AlertDialogOverlay,
 } from '@chakra-ui/react'
+import { useRef } from 'react';
 import {
   FiCpu,
   FiDatabase,
@@ -879,6 +880,8 @@ interface ModelDeploymentProps {
     versions: string[]
   }
 }
+
+const mockEndpoints: Endpoint[] = [];
 
 // API 호출 함수들 (목업)
 const createEndpoint = async (modelId: string, config: EndpointConfig): Promise<Endpoint> => {
@@ -949,6 +952,8 @@ export const ModelDeployment: React.FC<ModelDeploymentProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const [currentTime, setCurrentTime] = useState<string>('')
+  const leastDestructiveRef = useRef<HTMLElement | null>(null);
+
 
   const toast = useToast()
 
@@ -1016,7 +1021,7 @@ export const ModelDeployment: React.FC<ModelDeploymentProps> = ({
   const handleCreateEndpoint = async () => {
     setIsLoading(true)
     try {
-      const newEndpoint = await createEndpoint(modelId, config)
+      const newEndpoint = await createEndpoint(model.id, config)
       setEndpoints(prev => [...prev, newEndpoint])
       
       toast({
@@ -1046,7 +1051,7 @@ export const ModelDeployment: React.FC<ModelDeploymentProps> = ({
 
     setIsActionLoading(true)
     try {
-      await deleteEndpoint(modelId, selectedEndpoint.id)
+      await deleteEndpoint(model.id, selectedEndpoint.id)
       setEndpoints(prev => prev.filter(e => e.id !== selectedEndpoint.id))
       
       toast({
@@ -1075,7 +1080,7 @@ export const ModelDeployment: React.FC<ModelDeploymentProps> = ({
   const handleEndpointAction = async (endpoint: Endpoint, action: 'start' | 'stop') => {
     setIsActionLoading(true)
     try {
-      const updatedEndpoint = await updateEndpointStatus(modelId, endpoint.id, action)
+      const updatedEndpoint = await updateEndpointStatus(model.id, endpoint.id, action)
       setEndpoints(prev => prev.map(e => e.id === endpoint.id ? updatedEndpoint : e))
       
       toast({
@@ -1331,7 +1336,11 @@ export const ModelDeployment: React.FC<ModelDeploymentProps> = ({
       </Modal>
 
       {/* 삭제 다이얼로그 */}
-      <AlertDialog isOpen={isDeleteDialogOpen} leastDestructiveRef={null} onClose={() => setIsDeleteDialogOpen(false)}>
+      <AlertDialog
+        isOpen={isDeleteDialogOpen}
+        leastDestructiveRef={leastDestructiveRef}  // Sử dụng ref đã khởi tạo
+        onClose={() => setIsDeleteDialogOpen(false)}
+      >
         <AlertDialogOverlay>
           <AlertDialogContent bg={colors.bg}>
             <AlertDialogHeader fontSize="lg" fontWeight="bold" color={colors.headingColor}>엔드포인트 삭제</AlertDialogHeader>

@@ -67,7 +67,16 @@ export function CircularProgress({
             (100 - value) / 100
           })`,
         }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        transition={{
+          rotate: {
+            duration: 0.8,  // Đảm bảo duration là đúng kiểu
+            ease: "easeOut",
+          } as any,
+          strokeDashoffset: {
+            duration: 0.8,  // Đảm bảo duration là đúng kiểu
+            ease: "easeOut",
+          } as any,
+        }}
       >
         <circle
           cx="50%"
@@ -98,9 +107,15 @@ export function CircularProgress({
           scale: [0, 1],
           rotate: rotation,
         }}
-        transition={{ 
-          duration: 0.8,
-          ease: "easeOut"
+        transition={{
+          rotate: {
+            duration: 0.8,  // Đảm bảo duration là đúng kiểu
+            ease: "easeOut",
+          } as any,
+          strokeDashoffset: {
+            duration: 0.8,  // Đảm bảo duration là đúng kiểu
+            ease: "easeOut",
+          } as any,
         }}
       />
 
@@ -114,7 +129,16 @@ export function CircularProgress({
         textAlign="center"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{
+          rotate: {
+            duration: 0.3,  // Đảm bảo duration là đúng kiểu
+
+          } as any,
+          strokeDashoffset: {
+            duration: 0.3,  // Đảm bảo duration là đúng kiểu
+
+          } as any,
+        }}
       >
         <Text
           fontSize={`calc(${size} * 0.25)`}

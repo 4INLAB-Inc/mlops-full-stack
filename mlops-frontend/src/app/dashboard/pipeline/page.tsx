@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { Handle, NodeProps } from 'reactflow';
 import {
   ReactFlow,
   Background,
@@ -435,7 +436,7 @@ import axios from 'axios';
 //     />
 //   ),
 // };
-
+import type { ReactFlowInstance } from 'reactflow'
 function PipelineContent() {
   // 노드 타입 정의
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes.map(node => ({
@@ -450,6 +451,8 @@ function PipelineContent() {
   const [pipelineStatus, setPipelineStatus] = useState<'idle' | 'running' | 'paused' | 'completed' | 'error'>('idle')
   const [runningNodeIds, setRunningNodeIds] = useState<string[]>([])
   const [pausedNodeIds, setPausedNodeIds] = useState<string[]>([])
+
+  const cancelRef = useRef(null);
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const executionRef = useRef<{
@@ -522,7 +525,7 @@ function PipelineContent() {
           animated: edge.animated,
           style: {
             ...edge.style,
-            opacity: edge.style.opacity || 0.8,  // Thêm opacity nếu chưa có
+            opacity: edge.style?.opacity ?? 0.8,  // Thêm opacity nếu chưa có
           },
         });
       }
@@ -633,11 +636,14 @@ function PipelineContent() {
   }, [nodes, edges])
 
   // 노드 타입 정의
+  // WorkflowNodeProps definition
+
+
   const nodeTypes = useMemo(() => ({
-    workflowNode: (props) => (
+    workflowNode: (props: NodeProps) => (
       <WorkflowNode 
         {...props} 
-        onNodeAction={(action, nodeId) => {
+        onNodeAction={(action: 'run' | 'stop' | 'delete', nodeId: string) => {
           switch (action) {
             case 'run':
               // 특정 노드 실행 로직
@@ -721,11 +727,11 @@ function PipelineContent() {
       const previousNodes = edges
         .filter(edge => edge.target === nodeId)
         .map(edge => nodes.find(n => n.id === edge.source))
-        .filter(Boolean)
+        .filter((node): node is Node => node !== undefined);  // Type assertion to ensure nodes are not undefined
 
-      const hasFailedDependencies = previousNodes.some(node => node.data.status === 'failed')
+      const hasFailedDependencies = previousNodes.some(node => node.data.status === 'failed');
       if (hasFailedDependencies) {
-        throw new Error('이전 노드 중 실패한 노드가 있습니다')
+        throw new Error('이전 노드 중 실패한 노드가 있습니다');
       }
 
       // 노드가 일시 정지 상태인 경우 체크
@@ -868,23 +874,43 @@ function PipelineContent() {
                       completedAt: Date.now()
                     }
                   }
-                } catch (error) {
-                  console.error(`Node ${nodeId} output validation failed:`, error)
-                  setPipelineStatus('error')
-                  
-                  setLogs(prev => [...prev, {
-                    timestamp: new Date().toISOString(),
-                    level: 'error',
-                    message: `노드 ${nodeId} 출력 검증 실패: ${error.message}`
-                  }])
-                  
-                  return {
-                    ...node,
-                    data: {
-                      ...node.data,
-                      status: 'failed',
-                      error: error.message
-                    }
+                } catch (error: unknown) {
+                  if (error instanceof Error) {
+                    console.error(`Node ${nodeId} output validation failed:`, error);
+
+                    setPipelineStatus('error');
+                    setLogs(prev => [...prev, {
+                      timestamp: new Date().toISOString(),
+                      level: 'error',
+                      message: `Node ${nodeId} output validation failed: ${error.message}`,
+                    }]);
+
+                    return {
+                      ...node,
+                      data: {
+                        ...node.data,
+                        status: 'failed',
+                        error: error.message,
+                      },
+                    };
+                  } else {
+                    console.error('Unknown error during node validation:', error);
+
+                    setPipelineStatus('error');
+                    setLogs(prev => [...prev, {
+                      timestamp: new Date().toISOString(),
+                      level: 'error',
+                      message: `Node ${nodeId} output validation failed due to an unknown error.`,
+                    }]);
+
+                    return {
+                      ...node,
+                      data: {
+                        ...node.data,
+                        status: 'failed',
+                        error: 'Unknown error during validation',
+                      },
+                    };
                   }
                 }
               }
@@ -918,7 +944,7 @@ function PipelineContent() {
               data: {
                 ...node.data,
                 status: 'failed',
-                error: error.message
+                error: error instanceof Error ? error.message : 'Unknown error',
               }
             }
           }
@@ -933,14 +959,14 @@ function PipelineContent() {
       setLogs(prev => [...prev, {
         timestamp: new Date().toISOString(),
         level: 'error',
-        message: `노드 ${nodeId} 실행 중 오류 발생: ${error.message}`
+        message: `Error executing node ${nodeId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       }])
       
       // 파이프라인 실행 실패 시 토스트 메시지
       if (pipelineStatus === 'error') {
         toast({
           title: '파이프라인 실행 실패',
-          description: `노드 ${nodeId} 실행 중 오류가 발생했습니다: ${error.message}`,
+          description: `노드 ${nodeId} 실행 중 오류가 발생했습니다: ${error instanceof Error ? error.message : 'Unknown error'}`,
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -1274,6 +1300,12 @@ function PipelineContent() {
     event.dataTransfer.setData('application/reactflow', nodeType)
     event.dataTransfer.effectAllowed = 'move'
   }, [])
+
+  const onAddNode = (newNode: Node) => {
+    setNodes((prevNodes) => [...prevNodes, newNode]);
+    console.log('Node added:', newNode);
+  };
+
 
   // ReactFlow 초기화 핸들러
   const onInit = useCallback((instance: ReactFlowInstance) => {
@@ -2084,7 +2116,7 @@ function PipelineContent() {
         <Card bg={cardBg} borderRadius="lg" boxShadow="sm" overflow="hidden">
           <CardBody p={0}>
             <Flex h="calc(100vh - 220px)">
-              <NodeSidebar onDragStart={onDragStart} />
+              <NodeSidebar onDragStart={onDragStart} onAddNode={onAddNode}/>
 
               <Box flex={1} ref={reactFlowWrapper}>
                 <ReactFlow
@@ -2103,7 +2135,7 @@ function PipelineContent() {
                     style: { stroke: '#ED8936', strokeWidth: 2 }
                   }}
                   fitView
-                  defaultZoom={0.7}
+                  // zoom={0.7}
                   minZoom={0.2}
                   maxZoom={2}
                 >
@@ -2134,7 +2166,7 @@ function PipelineContent() {
         {/* 삭제 확인 대화상자 */}
         <AlertDialog
           isOpen={false}
-          leastDestructiveRef={null}
+          leastDestructiveRef={cancelRef} 
           onClose={() => {}}
         >
           <AlertDialogOverlay>

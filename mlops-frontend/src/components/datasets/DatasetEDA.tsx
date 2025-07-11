@@ -19,7 +19,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ScatterPlot,
+  ScatterChart,
   Scatter,
 } from 'recharts'
 

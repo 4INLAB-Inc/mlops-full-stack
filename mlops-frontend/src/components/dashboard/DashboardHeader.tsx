@@ -69,6 +69,7 @@ import {
 } from 'react-icons/fi'
 import NextLink from 'next/link'
 import { useState } from 'react'
+import { SimpleGrid } from '@chakra-ui/react';
 
 // 알림 데이터 타입 정의
 interface Notification {

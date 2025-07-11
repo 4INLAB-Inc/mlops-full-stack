@@ -19,28 +19,18 @@ def objective(trial, input_shape, X_train, X_val, y_train, y_val, model_type=Non
 
     # 👇 Auto model selection nếu chưa có model_type
     if model_type is None or model_type == "AutoML":
-        model_type = trial.suggest_categorical("model_type", ["LSTM", "GRU", "BiLSTM", "Conv1D_BiLSTM", "Transformer"])
+        model_type = trial.suggest_categorical("model_type", ["LSTM", "GRU", "BiLSTM", "Conv1D_BiLSTM"])
 
-    if model_type == "Transformer":
-        transformer_params = {
-            "d_model": trial.suggest_categorical("d_model", [32, 64, 128]),
-            "nhead": trial.suggest_categorical("nhead", [2, 4, 8]),
-            "num_layers": trial.suggest_int("num_layers", 1, 4),
-            "dim_feedforward": trial.suggest_int("dim_feedforward", 64, 256, step=64),
-            "dropout": trial.suggest_float("dropout", 0.1, 0.5),
-            "output_size": 1,
-            "learning_rate": learning_rate  # ✅ add this for consistency
-        }
-        model = build_model_by_type(model_type, input_shape=input_shape, **transformer_params)
-    else:
-        model_specific_params = {
-            "lstm_units": trial.suggest_int("lstm_units", 32, 256, step=32),
-            "conv_filters": trial.suggest_int("conv_filters", 32, 256, step=32),
-            "kernel_size": trial.suggest_int("kernel_size", 3, 7),
-            "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.5),
-            "learning_rate": learning_rate  # ✅ ensure learning_rate is passed
-        }
-        model = build_model_by_type(model_type, input_shape=input_shape, **model_specific_params)
+    
+    model_specific_params = {
+        "lstm_units": trial.suggest_int("lstm_units", 32, 256, step=32),
+        "conv_filters": trial.suggest_int("conv_filters", 32, 256, step=32),
+        "kernel_size": trial.suggest_int("kernel_size", 3, 7),
+        "num_layers": trial.suggest_int("num_layers", 1, 4),
+        "dropout_rate": trial.suggest_float("dropout_rate", 0.1, 0.5),
+        "learning_rate": learning_rate  # ✅ ensure learning_rate is passed
+    }
+    model = build_model_by_type(model_type, input_shape=input_shape, **model_specific_params)
 
     
     is_keras = hasattr(model, "fit")
@@ -75,7 +65,7 @@ def objective(trial, input_shape, X_train, X_val, y_train, y_val, model_type=Non
     return val_loss
 
 
-def optimize(input_shape, X_train, y_train, X_val, y_val, model_type=None, n_trials=20):
+def optimize(input_shape, X_train, y_train, X_val, y_val, model_type=None, n_trials=100):
     study = optuna.create_study(direction="minimize")
     study.optimize(
         lambda trial: objective(trial, input_shape, X_train, y_train, X_val, y_val, model_type),

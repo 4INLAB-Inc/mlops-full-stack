@@ -55,6 +55,7 @@ import {
   FiBarChart2,
   FiTrendingUp,
 } from 'react-icons/fi'
+import { useRef } from 'react';
 
 interface ModelVersion {
   version: string
@@ -104,6 +105,8 @@ export const ModelVersions: React.FC<ModelVersionsProps> = ({
   const { isOpen, onOpen, onClose } = useDisclosure()
   const toast = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const leastDestructiveRef = useRef<HTMLElement | null>(null);
+  
 
   // 메모이제이션된 색상 값들
   const colors = useMemo(() => ({
@@ -440,7 +443,7 @@ export const ModelVersions: React.FC<ModelVersionsProps> = ({
       {/* 롤백 확인 다이얼로그 */}
       <AlertDialog
         isOpen={isRollbackDialogOpen}
-        leastDestructiveRef={null}
+        leastDestructiveRef={leastDestructiveRef}
         onClose={() => setIsRollbackDialogOpen(false)}
       >
         <AlertDialogOverlay>

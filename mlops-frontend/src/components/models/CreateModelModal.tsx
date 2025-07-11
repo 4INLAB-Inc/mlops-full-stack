@@ -328,7 +328,8 @@ export function CreateModelModal({ isOpen, onClose }: CreateModelModalProps) {
       const formData = new FormData();
       const modelDescription = (target.model_description as HTMLTextAreaElement)?.value || "";
       const framework = (target.framework as HTMLSelectElement)?.value || "";
-      const dataset = (target.dataset as HTMLSelectElement)?.value || "";
+      // const dataset = (target.dataset as HTMLSelectElement)?.value || "";
+      const dataset = (target.elements.namedItem("dataset") as HTMLSelectElement)?.value || "";
       const author = (target.author as HTMLInputElement)?.value || "";
   
       if (modelName) formData.append("model_name", modelName);
@@ -423,7 +424,7 @@ export function CreateModelModal({ isOpen, onClose }: CreateModelModalProps) {
                   'application/x-python-pickle': ['.pkl'],
                   'application/octet-stream': ['.pth', '.h5', '.joblib', '.pt', '.onnx'],
                 }}
-                onFileSelect={setModelFile}
+                onFileSelect={(files: File[]) => setModelFile(files[0] || null)}
                 placeholder="모델 파일을 드래그하여 업로드하거나 클릭하여 선택하세요"
               />
             </FormControl>
@@ -434,7 +435,7 @@ export function CreateModelModal({ isOpen, onClose }: CreateModelModalProps) {
                 accept={{
                   'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
                 }}
-                onFileSelect={setThumbnailFile}
+                onFileSelect={(files: File[]) => setThumbnailFile(files[0] || null)} 
                 placeholder="이미지 파일을 드래그하여 업로드하거나 클릭하여 선택하세요"
               />
             </FormControl>

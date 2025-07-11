@@ -141,13 +141,3 @@ export default function ROCChart({ data, height = 400 }: ROCChartProps) {
     </Box>
   )
 }
-
-                },
-              },
-            ],
-          },
-        ]}
-      />
-    </Box>
-  )
-}

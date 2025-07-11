@@ -5,6 +5,9 @@ class EpochLogger(Callback):
         self.logger = logger
         self.total_epochs = total_epochs
 
+    def _fmt(self, val):
+        return f"{val:.4f}" if val is not None else "N/A"
+
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
         loss = logs.get("loss")
@@ -15,10 +18,13 @@ class EpochLogger(Callback):
         val_mape = logs.get("val_mape")
         smape = logs.get("smape_keras") or logs.get("smape")
         val_smape = logs.get("val_smape_keras") or logs.get("val_smape")
-        self.logger.info(
-            f"Epoch {epoch + 1}/{self.total_epochs}:: loss = {loss:.4f}, val_loss = {val_loss:.4f}, mae = {mae:.4f}, val_mae = {val_mae:.4f}, smape = {smape:.4f}, val_smape = {val_smape:.4f}"
-        )
 
+        self.logger.info(
+            f"Epoch {epoch + 1}/{self.total_epochs}:: "
+            f"loss = {self._fmt(loss)}, val_loss = {self._fmt(val_loss)}, "
+            f"mae = {self._fmt(mae)}, val_mae = {self._fmt(val_mae)}, "
+            f"smape = {self._fmt(smape)}, val_smape = {self._fmt(val_smape)}"
+        )
 
 class TorchEpochLogger:
     def __init__(self, logger, total_epochs=1):

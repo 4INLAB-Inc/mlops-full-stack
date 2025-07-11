@@ -6,7 +6,10 @@ export interface ResourceGroup {
   ramTotal: number
   ramFree: number
   freeHomeSpace: number
-  networkStatus: string
+  networkStatus: {
+    upload: number;   // Upload speed in Mbps
+    download: number; // Download speed in Mbps
+  }
 }
 
 export interface ClusterMetrics {

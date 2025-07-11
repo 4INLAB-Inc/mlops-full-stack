@@ -3,6 +3,8 @@
 import React from 'react'
 import { useColorMode } from '@chakra-ui/react'
 import dynamic from 'next/dynamic'
+import { ApexOptions } from 'apexcharts';
+
 
 const ApexCharts = dynamic(() => import('react-apexcharts'), {
   ssr: false,
@@ -21,7 +23,7 @@ export default function AreaChart({ data, categories }: AreaChartProps) {
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
 
-  const options = {
+  const options: ApexOptions = {
     chart: {
       type: 'area' as const,
       height: 350,
@@ -33,7 +35,6 @@ export default function AreaChart({ data, categories }: AreaChartProps) {
       },
       animations: {
         enabled: true,
-        easing: 'easeinout',
         speed: 800,
         animateGradually: {
           enabled: true,
@@ -58,7 +59,7 @@ export default function AreaChart({ data, categories }: AreaChartProps) {
     },
     stroke: {
       width: 2,
-      curve: 'smooth',
+      curve: 'smooth' as const,
       lineCap: 'round'
     },
     grid: {
@@ -116,8 +117,8 @@ export default function AreaChart({ data, categories }: AreaChartProps) {
       }
     },
     legend: {
-      position: 'top',
-      horizontalAlign: 'right',
+      position: 'top' as const,
+      horizontalAlign: 'right' as const,
       floating: true,
       offsetY: -25,
       offsetX: -5,

@@ -25,7 +25,6 @@ export default function DonutChart({ data, labels }: DonutChartProps) {
       fontFamily: 'inherit',
       animations: {
         enabled: true,
-        easing: 'easeinout',
         speed: 800,
         animateGradually: {
           enabled: true,
@@ -59,7 +58,7 @@ export default function DonutChart({ data, labels }: DonutChartProps) {
               fontWeight: 'bold',
               color: isDark ? '#CBD5E0' : '#4A5568',
               offsetY: 10,
-              formatter: (val: number) => `${val}%`
+              formatter: (val: string) => `${parseFloat(val).toFixed(0)}%` // Parse string to number and format
             },
             total: {
               show: true,
@@ -74,14 +73,13 @@ export default function DonutChart({ data, labels }: DonutChartProps) {
     },
     stroke: {
       width: 0,
-      lineCap: 'round'
+      lineCap: 'round' as 'round' | 'butt' | 'square' // Cast it to a valid value
     },
     legend: {
-      position: 'bottom',
-      horizontalAlign: 'center',
+      position: 'bottom' as const,
+      horizontalAlign: 'center' as const,  // Use a valid value like 'center', 'right', or 'left'
       fontSize: '14px',
       markers: {
-        radius: 12,
         width: 12,
         height: 12,
         offsetX: -3
@@ -94,7 +92,7 @@ export default function DonutChart({ data, labels }: DonutChartProps) {
       }
     },
     theme: {
-      mode: isDark ? 'dark' : 'light'
+      mode: isDark ? 'dark' : 'light' as 'dark' | 'light' // Cast it to 'dark' | 'light'
     },
     tooltip: {
       enabled: true,

@@ -33,7 +33,6 @@ export default function BarChart({ data, categories }: BarChartProps) {
       },
       animations: {
         enabled: true,
-        easing: 'easeinout',
         speed: 800,
         animateGradually: {
           enabled: true,
@@ -141,8 +140,8 @@ export default function BarChart({ data, categories }: BarChartProps) {
       }
     },
     legend: {
-      position: 'top',
-      horizontalAlign: 'right',
+      position: 'top' as const,
+      horizontalAlign: 'right' as const,
       floating: true,
       offsetY: -25,
       offsetX: -5,

@@ -1,8 +1,10 @@
 'use client'
 
 import { Box, Flex } from '@chakra-ui/react'
-import { Header } from '@/components/layout/Header'
-import { Sidebar } from '@/components/layout/Sidebar'
+// import { Header } from '@/components/layout/Header'
+// import { Sidebar } from '@/components/layout/Sidebar'
+import Header from '@/components/layout/Header'
+import Sidebar from '@/components/layout/Sidebar'
 import { useState } from 'react'
 
 export default function AuthLayout({
@@ -14,7 +16,8 @@ export default function AuthLayout({
 
   return (
     <Flex h="100vh">
-      <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      {/* <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} /> */}
+      <Sidebar isCollapsed={!isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
       <Box
         flex="1"
         ml={{ base: 0, lg: isSidebarOpen ? '280px' : '80px' }}

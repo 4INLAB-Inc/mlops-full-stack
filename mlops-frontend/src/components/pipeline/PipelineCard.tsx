@@ -20,9 +20,9 @@ interface Pipeline {
   id: number
   name: string
   description: string
-  status: 'running' | 'completed' | 'failed'
+  status: string
   progress: number
-  startTime: string
+  startTime: string | null
   endTime: string | null
   error?: string
 }
@@ -167,13 +167,15 @@ export default function PipelineCard({ pipeline }: PipelineCardProps) {
               시작 시간
             </Text>
             <Tooltip
-              label={format(new Date(pipeline.startTime), 'PPP p', {
-                locale: ko,
-              })}
+              label={format(
+                new Date(pipeline.startTime ?? new Date()), // Nếu pipeline.startTime là null, sử dụng ngày hiện tại
+                'PPP p',
+                { locale: ko }
+              )}
               hasArrow
             >
               <Text fontSize="sm" color={textColor} fontWeight="medium">
-                {format(new Date(pipeline.startTime), 'HH:mm')}
+                 {format(new Date(pipeline.startTime ?? new Date()), 'HH:mm')} 
               </Text>
             </Tooltip>
           </VStack>

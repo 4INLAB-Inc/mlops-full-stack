@@ -58,6 +58,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 ARG NB_USER=$NB_USER
 ARG NB_UID=$NB_UID
+ARG NB_GID=100
 ARG CONDA_DIR=$CONDA_DIR
 ARG ARCH=$ARCH
 ARG JUPYTER_PORT=$JUPYTER_PORT
@@ -90,6 +91,11 @@ RUN mkdir -p $MLFLOW_ARTIFACT_ROOT && \
 RUN mkdir -p $CENTRAL_STORAGE_PATH/models $CENTRAL_STORAGE_PATH/ref_data && \
     chown -R $NB_USER:$NB_USER $CENTRAL_STORAGE_PATH && \
     chmod -R go+rX $CENTRAL_STORAGE_PATH
+
+
+RUN mkdir -p /home/$NB_USER/.local/share/jupyter/runtime && \
+    chown -R $NB_USER:$NB_USER /home/$NB_USER/.local && \
+    chmod -R u+rwX /home/$NB_USER/.local
 
 # Config permission user
 USER $NB_USER
@@ -194,5 +200,7 @@ RUN echo "export LD_PRELOAD=/usr/lib/${ARCH}-linux-gnu/libGLdispatch.so.0" >> /h
 # Run Jupyter and api of run_flow together
 # RUN pip install fastapi==0.101.1 pydantic==1.7.4 uvicorn[standard]==0.23.2 gunicorn==20.1.0
 WORKDIR /home/$NB_USER/workspace
-CMD jupyter lab --port ${JUPYTER_PORT} --allow-root
+ENV JUPYTER_RUNTIME_DIR=/tmp/jupyter_runtime
+RUN mkdir -p $JUPYTER_RUNTIME_DIR && chmod -R 777 $JUPYTER_RUNTIME_DIR
+CMD jupyter lab --port ${JUPYTER_PORT} --allow-root --no-browser
 # & gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${JUPYTER_API_PORT} api_flow:app --timeout 1200

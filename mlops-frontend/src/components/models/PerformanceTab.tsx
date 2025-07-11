@@ -36,6 +36,7 @@ import {
   Divider
 } from '@chakra-ui/react'
 import { ChevronDownIcon } from '@chakra-ui/icons'
+import { useRef } from 'react';
 import {
   FiActivity,
   FiTrendingUp,
@@ -70,8 +71,10 @@ import {
 } from 'recharts'
 import axios from 'axios';
 interface PerformanceTabProps {
-  versions: any[];
-  modelId: string;  // Add this line for modelId
+  modelId: string
+  versions: any[] // hoặc kiểu chính xác nếu bạn có
+  selectedVersions: string[]
+  setSelectedVersions: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) => {
@@ -105,6 +108,8 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
   const [apiVersionData, setApiVersionData] = useState<any>(null);
   const toast = useToast();
 
+  const leastDestructiveRef = useRef<HTMLElement | null>(null);
+
 
   // 메모이제이션된 색상 값들
   const colors = useMemo(() => ({
@@ -113,8 +118,11 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
     textColor: useColorModeValue('gray.600', 'gray.400'),
     headingColor: useColorModeValue('gray.700', 'white'),
     chartGridColor: useColorModeValue('gray.100', 'gray.700'),
-    cardHoverBg: useColorModeValue('orange.50', 'gray.700')
+    cardHoverBg: useColorModeValue('orange.50', 'gray.700'),
+    orange: '#EB6100', // Thêm màu orange vào đây
   }), [])
+
+  const borderColor = colors.orange;
 
   // 메모이제이션된 스타일
   const styles = useMemo(() => ({
@@ -740,7 +748,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
                       tickFormatter={(value) => `${value}%`}
                     />
                     {/* 성능 차이 영역 표시 */}
-                    {performanceComparisonData.map((entry, index) => {
+                    {/* {performanceComparisonData.map((entry, index) => {
                       const diff = entry.현재 - entry.이전;
                       if (Math.abs(diff) > 0) {
                         return (
@@ -754,8 +762,22 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
                         );
                       }
                       return null;
-                    })}
-                    <Radar
+                    })} */}
+                    {performanceComparisonData.map((entry, index) => {
+                        const diff = entry.현재 - entry.이전;
+                        if (Math.abs(diff) > 0) {
+                          return (
+                            <Radar
+                              key={`diff-${index}`}
+                              name="차이"
+                              dataKey="현재"
+                              {...(diff > 0 ? chartStyles.radar.difference.improved : chartStyles.radar.difference.degraded)}
+                            />
+                          );
+                        }
+                        return null;
+                      })}
+                                    <Radar
                       name="이전"
                       dataKey="이전"
                       {...chartStyles.radar.previous}
@@ -940,7 +962,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
                   <Card
                     key={version.version}
                     variant="outline"
-                    borderColor={colors.borderColor}
+                    // borderColor={colors.borderColor}
                     {...styles.metricCard}
                     onClick={() => handleVersionAdd(version.version)}
                   >
@@ -1028,7 +1050,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
                     return (
                       <Box
                         key={item.label}
-                        p={4}
+                        // p={4}
                         {...styles.metricCard}
                       >
                         <VStack spacing={2} align="start">
@@ -1097,7 +1119,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
                     return (
                       <Box
                         key={item.label}
-                        p={4}
+                        // p={4}
                         {...styles.metricCard}
                       >
                         <VStack align="start" spacing={3}>
@@ -1178,7 +1200,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
                   return (
                     <Box
                       key={item.label}
-                      p={4}
+                      // p={4}
                       {...styles.metricCard}
                     >
                       <VStack align="start" spacing={2}>
@@ -1232,7 +1254,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
                   return (
                     <Box
                       key={item.label}
-                      p={4}
+                      // p={4}
                       {...styles.metricCard}
                     >
                       <VStack align="start" spacing={2}>
@@ -1270,7 +1292,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ versions, modelId }) =>
       {/* 롤백 확인 다이얼로그 */}
       <AlertDialog
         isOpen={isRollbackDialogOpen}
-        leastDestructiveRef={null}
+        leastDestructiveRef={leastDestructiveRef}
         onClose={() => setIsRollbackDialogOpen(false)}
       >
         <AlertDialogOverlay>

@@ -67,7 +67,7 @@ export default function ResourceMonitor() {
     <ChakraBox
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
+      transition="all 0.5s ease-in-out 0.2s"
     >
       <Text fontSize="lg" fontWeight="bold" mb={4}>
         시스템 리소스 모니터링

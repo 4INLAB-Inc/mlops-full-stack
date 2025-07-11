@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [status, pathname])
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const result = await signIn('credentials', {
         email,
@@ -35,17 +35,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (result?.error) {
-        throw new Error(result.error)
+        console.error('Login error:', result.error)
+        return false  // Đảm bảo luôn trả về false khi có lỗi
       }
 
-      return result?.ok
+      return result?.ok ?? false  // Trả về true nếu ok, nếu không trả về false
     } catch (error) {
       console.error('Login error:', error)
-      throw error
+      return false  // Trả về false nếu gặp lỗi
     }
   }
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     await signOut({ redirect: false })
     router.push('/login')
   }

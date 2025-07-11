@@ -32,6 +32,7 @@ services:
             - DB_API_LOG_TABLE_NAME=api_log
             - DOCKER_HOST=tcp://host.docker.internal:2375 # Chỉ định Docker daemon ở localhost:2375
             - TZ=Asia/Seoul
+        user: "${NB_UID}:0"
         networks:
             - mlops_network
         ports: 

@@ -22,11 +22,16 @@ import { useRouter } from 'next/navigation'
 import { FiEye, FiEyeOff } from 'react-icons/fi'
 import { useAuth } from '@/contexts/AuthContext'
 import { motion, useAnimation } from 'framer-motion'
-
+import { ReactNode } from 'react'
 const MotionBox = motion(Box)
 const MotionStack = motion(Stack)
 
-const BackgroundShape = ({ children, ...props }) => (
+interface BackgroundShapeProps {
+  children?: ReactNode
+  [key: string]: any // Dành cho các props bổ sung mà bạn muốn truyền vào
+}
+
+const BackgroundShape = ({ children, ...props }: BackgroundShapeProps) => (
   <MotionBox
     position="absolute"
     initial={{ opacity: 0, scale: 0.8 }}

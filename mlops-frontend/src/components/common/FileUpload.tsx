@@ -15,17 +15,17 @@ import { FiUploadCloud } from 'react-icons/fi'
 interface FileUploadProps {
   accept?: Record<string, string[]>
   maxSize?: number
-  onFileSelect: (file: File) => void
+  onFileSelect: (files: File[]) => void // 여러 파일을 허용
   placeholder?: string
 }
 
 export function FileUpload({
   accept,
-  maxSize = 10 * 1024 * 1024, // 기본 10MB
+  maxSize = 10 * 1024 * 1024, // 기본 크기: 10MB
   onFileSelect,
-  placeholder = '파일을 드래그하여 업로드하거나 클릭하여 선택하세요',
+  placeholder = '파일을 드래그하거나 클릭하여 선택하세요',
 }: FileUploadProps) {
-  const [fileName, setFileName] = useState<string>('')
+  const [fileNames, setFileNames] = useState<string[]>([]) // 선택된 파일 이름들을 저장
   const borderColor = useColorModeValue('gray.200', 'gray.600')
   const hoverBg = useColorModeValue('gray.50', 'gray.700')
   const activeBg = useColorModeValue('gray.100', 'gray.600')
@@ -33,9 +33,9 @@ export function FileUpload({
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
-        const file = acceptedFiles[0]
-        setFileName(file.name)
-        onFileSelect(file)
+        const fileNames = acceptedFiles.map(file => file.name) // 선택된 파일들의 이름을 가져옴
+        setFileNames(fileNames) // 파일 이름들을 상태에 저장
+        onFileSelect(acceptedFiles) // 선택된 모든 파일을 onFileSelect 함수로 전달
       }
     },
     [onFileSelect]
@@ -45,7 +45,7 @@ export function FileUpload({
     onDrop,
     accept,
     maxSize,
-    multiple: false,
+    multiple: true, // 여러 파일을 선택할 수 있도록 허용
   })
 
   return (
@@ -62,15 +62,15 @@ export function FileUpload({
       cursor="pointer"
       p={6}
     >
-      <Input {...getInputProps()} />
+      <Input {...getInputProps()} size="sm" />
       <VStack spacing={2} color={isDragActive ? 'brand.500' : 'gray.500'}>
         <Icon as={FiUploadCloud} boxSize={8} />
         <Text textAlign="center" fontSize="sm">
-          {fileName || placeholder}
+          {fileNames.length > 0 ? fileNames.join(', ') : placeholder} {/* 선택된 파일 이름들을 표시 */}
         </Text>
-        {fileName && (
+        {fileNames.length > 0 && (
           <Text color="brand.500" fontSize="sm" fontWeight="medium">
-            {fileName}
+            {fileNames.join(', ')} {/* 선택된 모든 파일 이름을 표시 */}
           </Text>
         )}
       </VStack>

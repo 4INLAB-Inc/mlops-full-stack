@@ -117,7 +117,7 @@ export function ResourceChart({ data, height = '300px' }: ResourceChartProps) {
             }
             return `${label}: ${value}`;
           },
-        },    
+        },
       },
     },
     scales: {
@@ -167,13 +167,18 @@ export function ResourceChart({ data, height = '300px' }: ResourceChartProps) {
         },
       },
     },
+    // Correcting the animation structure
     animations: {
+      // Example for a line chart with radius animation
       radius: {
+        type: 'number' as const,
         duration: 400,
-        easing: 'linear',
+        easing: 'linear' as const,
+        properties: ['radius'],
       },
     },
   }
+
 
   return (
     <Box height={height} p={2}>
