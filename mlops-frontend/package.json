@@ -30,7 +30,7 @@
     "@visx/visx": "^3.12.0",
     "apexcharts": "^4.4.0",
     "autoprefixer": "^10.4.21",
-    "axios": "^1.8.4",
+    "axios": "^1.10.0",
     "chart.js": "^4.4.7",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
